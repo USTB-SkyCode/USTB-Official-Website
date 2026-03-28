@@ -83,9 +83,6 @@ docker push registry.your-domain.com/world-frontend:latest
 
 ## 公开边界
 
-- `docs/` 只公开 `docs/development/`
-- `scripts/` 只公开 `scripts/dev/` 和 `scripts/BlockPaser/`
-- `.env`、`.env.local`、TODO、agent 文件不公开
 - `.vscode/` 保留为公开协作目录
 
 ## 仓库结构
