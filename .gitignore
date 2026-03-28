@@ -68,7 +68,7 @@ stats.html
 # Open-source publish boundaries
 **/*.md
 **/*.MD
-!README.md
+!/README.md
 
 docs/**
 !docs/
