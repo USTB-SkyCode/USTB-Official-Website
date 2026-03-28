@@ -1,0 +1,38 @@
+[package]
+name = "world-core"
+description = "Voxel Engine Core Logic in WebAssembly"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "world_core"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+dev-logging = []
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+flate2 = "1.0"
+byteorder = "1.5"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["console"] }
+rustc-hash = "2.0"
+lazy_static = "1.5"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+# wasm-opt = ["-Oz", "--enable-mutable-globals", "--enable-bulk-memory", "--enable-simd", "--enable-nontrapping-float-to-int", "--enable-sign-ext"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+# 保留调试符号便于本地采样分析；发布前可改回 strip = true
+debug = true
+strip = false
+

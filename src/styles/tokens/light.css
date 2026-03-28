@@ -1,0 +1,65 @@
+html {
+  color-scheme: light;
+  --anim-page-bg-light:
+    radial-gradient(circle at top left, rgb(77 181 236 / 22%), transparent 36%),
+    radial-gradient(circle at top right, rgb(11 101 255 / 18%), transparent 28%),
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 82%),
+      rgb(247 250 255 / 92%) 42%,
+      rgb(243 248 255) 100%
+    );
+  --anim-page-bg-dark:
+    radial-gradient(circle at top left, rgb(55 107 176 / 20%), transparent 30%),
+    radial-gradient(circle at top right, rgb(24 50 110 / 24%), transparent 26%),
+    linear-gradient(180deg, rgb(10 17 30) 0%, rgb(11 19 34) 42%, rgb(8 13 24) 100%);
+  --hover-bg-color: rgb(77 181 236 / 0.9);
+  --active-bg-color: rgb(77 181 236 / 70%);
+  --menu-item-bg-color: rgb(77 181 236 / 40%);
+  --theme-page-bg:
+    radial-gradient(circle at top left, rgb(77 181 236 / 22%), transparent 36%),
+    radial-gradient(circle at top right, rgb(11 101 255 / 18%), transparent 28%),
+    linear-gradient(
+      180deg,
+      rgb(255 255 255 / 82%),
+      rgb(247 250 255 / 92%) 42%,
+      rgb(243 248 255) 100%
+    );
+  --theme-accent: rgb(11 101 255 / 82%);
+  --theme-accent-soft: rgb(77 181 236 / 18%);
+  --theme-surface-glass: rgb(255 255 255 / 58%);
+  --theme-surface-glass-strong: rgb(255 255 255 / 72%);
+  --theme-surface-glass-muted: rgb(255 255 255 / 56%);
+  --theme-card-bg: linear-gradient(180deg, rgb(255 255 255 / 84%), rgb(247 250 255 / 72%));
+  --theme-border-soft: rgb(77 181 236 / 14%);
+  --theme-border-strong: rgb(77 181 236 / 18%);
+  --theme-text-strong: rgb(17 24 39 / 94%);
+  --theme-text-muted: rgb(31 41 55 / 76%);
+  --theme-text-subtle: rgb(55 65 81 / 64%);
+  --theme-shadow-soft: 0 8px 24px rgb(16 24 40 / 5%);
+  --theme-shadow-strong: 0 18px 48px rgb(18 33 68 / 10%);
+  --theme-shadow-hero: 0 18px 50px rgb(27 46 94 / 10%);
+  --theme-header-border: rgb(255 255 255 / 16%);
+  --theme-header-bg:
+    linear-gradient(180deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 8%)),
+    rgb(11 101 255 / 22%);
+  --theme-header-shadow:
+    0 2px 16px rgb(0 0 0 / 8%),
+    0 1px 3px rgb(0 0 0 / 10%);
+  --theme-toggle-border: rgb(255 255 255 / 20%);
+  --theme-toggle-bg: rgb(255 255 255 / 8%);
+  --theme-toggle-active-bg: var(--el-color-primary);
+  --theme-toggle-knob: rgb(255 255 255 / 18%);
+  --el-color-primary: rgb(11 101 255);
+  --el-color-success: rgb(22 163 74);
+  --el-color-warning: rgb(217 119 6);
+  --el-color-danger: rgb(220 38 38);
+  --el-color-info: rgb(100 116 139);
+  --el-color-white: rgb(255 255 255);
+  --el-text-color: rgb(31 45 61 / 94%);
+  --el-text-color-primary: rgb(17 24 39 / 94%);
+  --el-text-color-regular: rgb(31 41 55 / 82%);
+  --el-text-color-secondary: rgb(55 65 81 / 72%);
+  --el-border-color-lighter: rgb(148 163 184 / 28%);
+  --el-icon-color-warning: rgb(245 158 11);
+}

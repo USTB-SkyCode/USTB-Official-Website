@@ -1,0 +1,9 @@
+node_modules
+dist
+core/target
+core/pkg
+*.tgz
+.env
+.env.local
+.vscode
+stats.html

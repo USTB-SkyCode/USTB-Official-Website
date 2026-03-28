@@ -1,0 +1,101 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.sample
+!.env.template
+*.local
+
+# Node and frontend outputs
+node_modules
+dist
+dist-ssr
+coverage
+.vite
+.cache
+.pnpm-store
+.eslintcache
+*.tsbuildinfo
+
+# Test artifacts
+/cypress/videos/
+/cypress/screenshots/
+__screenshots__/
+
+# Editor directories and files
+.vscode/*
+!.vscode/
+!.vscode/**
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python caches and virtualenvs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Rust / wasm generated outputs
+core/target/
+core/pkg/
+
+# Profiling and analysis artifacts
+core/flamegraph.svg
+core/perf.data
+core/perf.data.*
+core/profile-summary.txt
+core/profile.json
+core/profile.json.gz
+stats.html
+
+# Open-source publish boundaries
+**/*.md
+**/*.MD
+!README.md
+
+docs/**
+!docs/
+!docs/development/
+!docs/development/**
+duplicated/
+dev.md
+TODO.md
+scripts/**
+!scripts/
+!scripts/dev/
+!scripts/dev/**
+!scripts/BlockPaser/
+!scripts/BlockPaser/**
+resource/**
+!resource/
+!resource/.gitkeep
+!resource/mca/
+!resource/mca/.gitkeep
+**/AGENTS.md
+**/copilot-instructions.md
+**/*.agent.md
+**/*.instructions.md
+**/*.prompt.md
+agent/
+.agent/
+.agent.*
+
+# OS files
+.DS_Store

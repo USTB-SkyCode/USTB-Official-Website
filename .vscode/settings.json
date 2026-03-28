@@ -1,0 +1,34 @@
+{
+  "files.associations": {
+    "*.vert": "glsl",
+    "*.frag": "glsl",
+    "*.vsh": "glsl",
+    "*.fsh": "glsl",
+    "*.glsl": "glsl"
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "tsconfig.json": "tsconfig.*.json, env.d.ts",
+    "vite.config.*": "jsconfig*, vitest.config.*, cypress.config.*, playwright.config.*",
+    "package.json": "package-lock.json, pnpm*, .yarnrc*, yarn*, .eslint*, eslint*, .oxlint*, oxlint*, .prettier*, prettier*, .editorconfig",
+    "eslint.config.*": "tsconfig.eslint.json, .eslintrc, .eslintrc.*",
+    ".eslintrc": ".eslintrc.*, tsconfig.eslint.json",
+    ".prettierrc": ".prettierignore, .prettierrc.*, prettier.config.*",
+    ".stylelintrc": ".stylelintignore, .stylelintrc.*",
+    ".gitignore": ".gitattributes"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultEOL": "\n",
+  "files.eol": "\n",
+  "css.validate": false,
+  "emmet.includeLanguages": {
+    "postcss": "css"
+  },
+  "rust-analyzer.linkedProjects": [
+    "core/Cargo.toml"
+  ]
+}

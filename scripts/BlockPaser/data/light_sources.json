@@ -1,0 +1,176 @@
+{
+  "simple": {
+    "minecraft:glowstone": 15,
+    "minecraft:sea_lantern": { "intensity": 15, "color": [0.8, 0.9, 1.0] },
+    "minecraft:lantern": 15,
+    "minecraft:soul_lantern": { "intensity": 10, "color": [0.4, 0.8, 1.0] },
+    "minecraft:shroomlight": 15,
+    "minecraft:ochre_froglight": { "intensity": 15, "color": [1.0, 0.9, 0.5] },
+    "minecraft:verdant_froglight": { "intensity": 15, "color": [0.7, 0.9, 0.7] },
+    "minecraft:pearlescent_froglight": { "intensity": 15, "color": [0.9, 0.7, 0.9] },
+    "minecraft:beacon": { "intensity": 15, "color": [0.8, 0.9, 1.0] },
+    "minecraft:conduit": { "intensity": 15, "color": [0.4, 0.8, 1.0] },
+    "minecraft:magma_block": { "intensity": 3, "color": [1.0, 0.5, 0.0] },
+    "minecraft:lava_cauldron": { "intensity": 15, "color": [1.0, 0.5, 0.0] },
+    "minecraft:crying_obsidian": { "intensity": 10, "color": [0.6, 0.0, 0.8] },
+    "minecraft:end_rod": { "intensity": 14, "color": [1.0, 1.0, 1.0] },
+    "minecraft:torch": { "intensity": 14, "color": [1.0, 0.9, 0.8] },
+    "minecraft:wall_torch": { "intensity": 14, "color": [1.0, 0.9, 0.8] },
+    "minecraft:soul_torch": { "intensity": 10, "color": [0.4, 0.8, 1.0] },
+    "minecraft:soul_wall_torch": { "intensity": 10, "color": [0.4, 0.8, 1.0] },
+    "minecraft:fire": { "intensity": 15, "color": [1.0, 0.6, 0.1] },
+    "minecraft:soul_fire": { "intensity": 10, "color": [0.4, 0.8, 1.0] },
+    "minecraft:lava": { "intensity": 15, "color": [1.0, 0.5, 0.0] },
+    "minecraft:glow_lichen": { "intensity": 7, "color": [0.8, 0.9, 0.8] },
+    "minecraft:small_amethyst_bud": { "intensity": 1, "color": [0.6, 0.4, 0.8] },
+    "minecraft:medium_amethyst_bud": { "intensity": 2, "color": [0.6, 0.4, 0.8] },
+    "minecraft:large_amethyst_bud": { "intensity": 4, "color": [0.6, 0.4, 0.8] },
+    "minecraft:amethyst_cluster": { "intensity": 5, "color": [0.6, 0.4, 0.8] },
+    "minecraft:sculk_sensor": { "intensity": 1, "color": [0.0, 0.6, 0.7] },
+    "minecraft:calibrated_sculk_sensor": { "intensity": 1, "color": [0.0, 0.6, 0.7] },
+    "minecraft:sculk_catalyst": { "intensity": 6, "color": [0.0, 0.6, 0.7] },
+    "minecraft:jack_o_lantern": 15,
+    "minecraft:ender_chest": 7,
+    "minecraft:nether_portal": { "intensity": 11, "color": [0.6, 0.0, 0.8] },
+    "minecraft:end_portal": { "intensity": 15, "color": [1.0, 1.0, 1.0] },
+    "minecraft:dragon_egg": { "intensity": 6, "color": [0.6, 0.0, 0.8] },
+    "minecraft:brown_mushroom": 1,
+    "minecraft:brewing_stand": 1,
+    "minecraft:end_portal_frame": 1,
+    "minecraft:redstone_block": { "intensity": 7, "color": [1.0, 0.0, 0.0] }
+  },
+  "complex": {
+    "minecraft:redstone_lamp": {
+      "property": "lit",
+      "values": { "true": 15, "false": 0 },
+      "color": [1.0, 0.9, 0.8]
+    },
+    "minecraft:campfire": {
+      "property": "lit",
+      "values": { "true": 15, "false": 0 },
+      "color": [1.0, 0.6, 0.1]
+    },
+    "minecraft:soul_campfire": {
+      "property": "lit",
+      "values": { "true": 10, "false": 0 },
+      "color": [0.4, 0.8, 1.0]
+    },
+    "minecraft:furnace": {
+       "property": "lit",
+       "values": { "true": 13, "false": 0 },
+       "color": [1.0, 0.6, 0.1]
+    },
+    "minecraft:blast_furnace": {
+      "property": "lit",
+      "values": { "true": 13, "false": 0 },
+      "color": [1.0, 0.6, 0.1]
+   },
+   "minecraft:smoker": {
+    "property": "lit",
+    "values": { "true": 13, "false": 0 },
+    "color": [1.0, 0.6, 0.1]
+   },
+   "minecraft:redstone_torch": {
+      "property": "lit",
+      "values": { "true": 7, "false": 0 },
+      "color": [1.0, 0.0, 0.0]
+   },
+   "minecraft:redstone_wall_torch": {
+      "property": "lit",
+      "values": { "true": 7, "false": 0 },
+      "color": [1.0, 0.0, 0.0]
+   },
+   "minecraft:candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.8, 0.6] },
+   "minecraft:white_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 1.0, 1.0] },
+   "minecraft:orange_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.6, 0.0] },
+   "minecraft:magenta_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.0, 1.0] },
+   "minecraft:light_blue_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.6, 0.8, 1.0] },
+   "minecraft:yellow_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 1.0, 0.0] },
+   "minecraft:lime_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.8, 1.0, 0.0] },
+   "minecraft:pink_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.7, 0.8] },
+   "minecraft:gray_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.5, 0.5, 0.5] },
+   "minecraft:light_gray_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.8, 0.8, 0.8] },
+   "minecraft:cyan_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 1.0, 1.0] },
+   "minecraft:purple_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.5, 0.0, 0.5] },
+   "minecraft:blue_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 0.0, 1.0] },
+   "minecraft:brown_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.6, 0.4, 0.2] },
+   "minecraft:green_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 0.5, 0.0] },
+   "minecraft:red_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.0, 0.0] },
+   "minecraft:black_candle": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.2, 0.2, 0.2] },
+   "minecraft:candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.8, 0.6] },
+   "minecraft:white_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 1.0, 1.0] },
+   "minecraft:orange_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.6, 0.0] },
+   "minecraft:magenta_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.0, 1.0] },
+   "minecraft:light_blue_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.6, 0.8, 1.0] },
+   "minecraft:yellow_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 1.0, 0.0] },
+   "minecraft:lime_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.8, 1.0, 0.0] },
+   "minecraft:pink_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.7, 0.8] },
+   "minecraft:gray_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.5, 0.5, 0.5] },
+   "minecraft:light_gray_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.8, 0.8, 0.8] },
+   "minecraft:cyan_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 1.0, 1.0] },
+   "minecraft:purple_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.5, 0.0, 0.5] },
+   "minecraft:blue_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 0.0, 1.0] },
+   "minecraft:brown_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.6, 0.4, 0.2] },
+   "minecraft:green_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.0, 0.5, 0.0] },
+   "minecraft:red_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [1.0, 0.0, 0.0] },
+   "minecraft:black_candle_cake": { "property": "lit", "values": { "true": 3, "false": 0 }, "color": [0.2, 0.2, 0.2] },
+   "minecraft:respawn_anchor": {
+      "property": "charges",
+      "values": { "0": 0, "1": 3, "2": 7, "3": 11, "4": 15 },
+      "color": [0.6, 0.0, 0.8]
+   },
+   "minecraft:redstone_ore": {
+      "property": "lit",
+      "values": { "true": 9, "false": 0 },
+      "color": [1.0, 0.0, 0.0]
+   },
+   "minecraft:deepslate_redstone_ore": {
+      "property": "lit",
+      "values": { "true": 9, "false": 0 },
+      "color": [1.0, 0.0, 0.0]
+   },
+   "minecraft:sea_pickle": {
+      "property": "pickles",
+      "values": { "1": 6, "2": 9, "3": 12, "4": 15 },
+      "color": [0.8, 0.9, 0.7]
+   },
+   "minecraft:cave_vines": { 
+       "property": "berries",
+       "values": { "true": 14, "false": 0 },
+       "color": [1.0, 0.7, 0.2]
+   },
+   "minecraft:cave_vines_plant": { 
+      "property": "berries",
+      "values": { "true": 14, "false": 0 },
+      "color": [1.0, 0.7, 0.2]
+  },
+  "minecraft:copper_bulb": { "property": "lit", "values": { "true": 15, "false": 0 } },
+  "minecraft:waxed_copper_bulb": { "property": "lit", "values": { "true": 15, "false": 0 } },
+  "minecraft:exposed_copper_bulb": { "property": "lit", "values": { "true": 12, "false": 0 } },
+  "minecraft:waxed_exposed_copper_bulb": { "property": "lit", "values": { "true": 12, "false": 0 } },
+  "minecraft:weathered_copper_bulb": { "property": "lit", "values": { "true": 8, "false": 0 } },
+  "minecraft:waxed_weathered_copper_bulb": { "property": "lit", "values": { "true": 8, "false": 0 } },
+  "minecraft:oxidized_copper_bulb": {
+    "property": "lit",
+    "values": { "true": 4, "false": 0 }
+  },
+  "minecraft:waxed_oxidized_copper_bulb": {
+    "property": "lit",
+    "values": { "true": 4, "false": 0 }
+  },
+  "minecraft:repeater": {
+    "property": "powered",
+    "values": { "true": 7, "false": 0 },
+    "color": [1.0, 0.0, 0.0]
+  },
+  "minecraft:comparator": {
+    "property": "powered",
+    "values": { "true": 7, "false": 0 },
+    "color": [1.0, 0.0, 0.0]
+  },
+  "minecraft:light": {
+      "property": "level",
+      "values": { "15": 15, "14": 14, "13": 13, "12": 12, "11": 11, "10": 10, "9": 9, "8": 8, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2, "1": 1, "0": 0 }
+  }
+}
+}
