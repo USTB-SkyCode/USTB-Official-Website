@@ -378,7 +378,6 @@ const benefits = [
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 68%, transparent);
   border-radius: inherit;
   background:
     linear-gradient(180deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 4%)),

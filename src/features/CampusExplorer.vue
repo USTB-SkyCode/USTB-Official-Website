@@ -222,7 +222,7 @@ function pickTargetBlock() {
 
 .campus-explorer__copy {
   margin: 10px 0 0;
-  color: color-mix(in srgb, var(--theme-text-strong) 72%, var(--theme-text-muted));
+  color: rgb(255 255 255 / 96%);
   line-height: 1.6;
 }
 
