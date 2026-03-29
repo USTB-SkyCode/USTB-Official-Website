@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, nextTick, type Ref } from 'vue'
+import { isRef, onMounted, onBeforeUnmount, nextTick, type Ref } from 'vue'
 
 const props = defineProps<{
   container?: Ref<HTMLElement | null> | HTMLElement | null
@@ -12,10 +12,10 @@ const props = defineProps<{
 function getEl(): HTMLElement | null {
   const c = props.container as unknown as Ref<HTMLElement | null> | HTMLElement | null | undefined
   if (!c) return null
-  if (typeof (c as Ref<HTMLElement | null>)?.value !== 'undefined') {
-    return (c as Ref<HTMLElement | null>).value ?? null
+  if (isRef(c)) {
+    return c.value ?? null
   }
-  return (c as HTMLElement) ?? null
+  return c
 }
 
 let _ro: ResizeObserver | null = null

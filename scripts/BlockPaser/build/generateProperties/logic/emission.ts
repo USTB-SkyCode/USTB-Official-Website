@@ -1,5 +1,5 @@
 import { DEFAULT_WARM_COLOR } from './constants';
-import { getLightSources, getSimpleRule, getComplexRule } from './lightSource';
+import { getSimpleRule, getComplexRule } from './lightSource';
 // import { LightRuleSimple, LightRuleComplex } from './lightSource'; // Not strictly needed unless mapping
 
 export type EmissionData = {
@@ -176,7 +176,7 @@ export function calculateBlockEmission(
         // ... handled by baseColor logic mostly, but keep special cases
         if (cleanName.includes('nether_portal')) {
             const c: [number, number, number] = [0.6, 0.0, 0.8];
-            if (emission) emission.color = c;
+            emission.color = c;
             for (const s of slotEmissions) if (s) s.color = c;
         }
     }

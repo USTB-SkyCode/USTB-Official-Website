@@ -939,7 +939,7 @@ export class TextureManager {
     } finally {
       // GPU 上传完成后立即释放 CPU 侧副本，降低主线程内存压力。
       loader.clear()
-      loaded = []
+      loaded.length = 0
     }
   }
 

@@ -39,7 +39,6 @@ interface TextureProperties {
 }
 
 import { Logger } from '../core/Logger';
-import { cleanTemplate } from '../generateBlocks/cleanTemplate';
 
 // ------------------------------------------
 // 工具方法
@@ -168,12 +167,17 @@ function analyzeEmission(colorData: Buffer, specData: Buffer, width: number, hei
 
 function readPng(filePath: string): Promise<{ width: number; height: number; data: Buffer }> {
   return new Promise((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(new PNG())
+    const stream = fs.createReadStream(filePath);
+    const png = new PNG();
+
+    stream.on('error', reject);
+    png
       .on('parsed', function () {
         resolve({ width: this.width, height: this.height, data: this.data });
       })
       .on('error', reject);
+
+    stream.pipe(png);
   });
 }
 

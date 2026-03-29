@@ -2,7 +2,7 @@ import globals from 'globals'
 import pluginJs from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
-import pluginPrettierRecommendedConfigs, { files } from 'eslint-plugin-prettier/recommended'
+import pluginPrettierRecommendedConfigs from 'eslint-plugin-prettier/recommended'
 import path from 'path'
 export default [
   {

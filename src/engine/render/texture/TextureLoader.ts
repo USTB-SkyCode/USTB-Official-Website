@@ -365,10 +365,6 @@ export class TextureLoader {
       }
     }
 
-    if (!dataView) {
-      throw new Error('[TextureLoader] Fatal: Failed to obtain texture data (Unexpected State).')
-    }
-
     // 3. 将解压后的数据写入缓存。
     if (!cachedBuffer) {
       const cacheData = new Uint8Array(dataView.byteLength)

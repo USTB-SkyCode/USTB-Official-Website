@@ -1,6 +1,3 @@
-
-import { TemplateDef } from '../core/types';
-
 /**
  * 清理模板定义，移除 Rust Core 不需要的多余字段 (如 name, uuid, shade 等)
  * 以减少最终 templates.json 的体积。

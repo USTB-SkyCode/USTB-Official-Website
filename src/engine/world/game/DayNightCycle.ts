@@ -147,19 +147,19 @@ export class DayNightCycle {
     this.setVec3(this.sunDirection, [sunDirVec[0], sunDirVec[1], sunDirVec[2]])
 
     // 计算太阳颜色与雾颜色。
-    let sunColorArr = [1, 1, 1]
-    let fogColorArr = [0.5, 0.6, 0.7]
+    let sunColorArr: [number, number, number]
+    let fogColorArr: [number, number, number]
 
     if (this.timeProgress < 0.1) {
       // 日出。
       const t = this.timeProgress / 0.1
-      sunColorArr = this.lerpColor([0.1, 0.1, 0.2], [1.0, 0.6, 0.3], t)
-      fogColorArr = this.lerpColor([0.05, 0.05, 0.1], [0.6, 0.4, 0.3], t)
+      sunColorArr = this.lerpColor([0.1, 0.1, 0.2], [1.0, 0.6, 0.3], t) as [number, number, number]
+      fogColorArr = this.lerpColor([0.05, 0.05, 0.1], [0.6, 0.4, 0.3], t) as [number, number, number]
     } else if (this.timeProgress < 0.2) {
       // 清晨。
       const t = (this.timeProgress - 0.1) / 0.1
-      sunColorArr = this.lerpColor([1.0, 0.6, 0.3], [1.0, 0.9, 0.8], t)
-      fogColorArr = this.lerpColor([0.6, 0.4, 0.3], [0.5, 0.6, 0.7], t)
+      sunColorArr = this.lerpColor([1.0, 0.6, 0.3], [1.0, 0.9, 0.8], t) as [number, number, number]
+      fogColorArr = this.lerpColor([0.6, 0.4, 0.3], [0.5, 0.6, 0.7], t) as [number, number, number]
     } else if (this.timeProgress < 0.4) {
       // 白天。
       sunColorArr = [1.0, 1.0, 1.0]
@@ -167,13 +167,13 @@ export class DayNightCycle {
     } else if (this.timeProgress < 0.5) {
       // 下午到日落。
       const t = (this.timeProgress - 0.4) / 0.1
-      sunColorArr = this.lerpColor([1.0, 1.0, 1.0], [1.0, 0.5, 0.2], t)
-      fogColorArr = this.lerpColor([0.5, 0.6, 0.7], [0.6, 0.4, 0.3], t)
+      sunColorArr = this.lerpColor([1.0, 1.0, 1.0], [1.0, 0.5, 0.2], t) as [number, number, number]
+      fogColorArr = this.lerpColor([0.5, 0.6, 0.7], [0.6, 0.4, 0.3], t) as [number, number, number]
     } else if (this.timeProgress < 0.6) {
       // 日落到黄昏。
       const t = (this.timeProgress - 0.5) / 0.1
-      sunColorArr = this.lerpColor([1.0, 0.5, 0.2], [0.2, 0.2, 0.3], t)
-      fogColorArr = this.lerpColor([0.6, 0.4, 0.3], [0.1, 0.1, 0.2], t)
+      sunColorArr = this.lerpColor([1.0, 0.5, 0.2], [0.2, 0.2, 0.3], t) as [number, number, number]
+      fogColorArr = this.lerpColor([0.6, 0.4, 0.3], [0.1, 0.1, 0.2], t) as [number, number, number]
     } else {
       // 夜晚。
       sunColorArr = [0.1, 0.1, 0.2]

@@ -3,7 +3,6 @@ import * as path from 'path';
 import pako from 'pako';
 import { Logger } from '../core/Logger';
 import { serializeRegistry } from './RegistrySerializer';
-import { getResourceContexts } from '../core/config';
 import type { ResourceContext } from '../core/types';
 
 /**
@@ -380,6 +379,7 @@ export async function optimizeContext(context: ResourceContext) {
         Math.floor(e.color[1] * 255),
         Math.floor(e.color[2] * 255)
       ];
+    }
 
 
     if (hasEmission) {
@@ -394,7 +394,6 @@ export async function optimizeContext(context: ResourceContext) {
 
     if (block.use_variant_lut) {
       flags |= (1 << 13);
-    }
     }
 
     if (name.includes('redstone_block') || name.includes('repeater') || name.includes('comparator') || name.includes('redstone_torch')) {

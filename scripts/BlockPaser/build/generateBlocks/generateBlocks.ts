@@ -173,7 +173,6 @@ class BlockProcessor {
 
       // Check if this block is a decal block
       const isDecalBlock = this.decalBlocks.has(blockName);
-      const isMixedBlock = this.mixedBlocks.has(blockName);
       const isAllowedRandom = this.randomBlockAllowlist.has(blockName);
 
       // 临时存储当前方块引用的唯一模型组合
