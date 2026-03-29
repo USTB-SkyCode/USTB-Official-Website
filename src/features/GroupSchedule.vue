@@ -374,20 +374,6 @@ const benefits = [
   border-radius: 28px;
 }
 
-.hero-main::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 4%)),
-    color-mix(in srgb, var(--theme-surface-glass) 42%, transparent);
-  box-shadow: 0 10px 30px rgb(20 34 66 / 4%);
-  backdrop-filter: blur(12px) saturate(116%);
-  -webkit-backdrop-filter: blur(12px) saturate(116%);
-  pointer-events: none;
-}
-
 .hero-main > * {
   position: relative;
   z-index: 1;
@@ -461,13 +447,6 @@ const benefits = [
   display: flex;
   gap: 16px;
   margin-top: 4px;
-}
-
-:global(html.dark) .hero-main::before {
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 2%)),
-    color-mix(in srgb, var(--theme-surface-glass) 28%, transparent);
-  box-shadow: 0 14px 34px rgb(0 0 0 / 18%);
 }
 
 .action {

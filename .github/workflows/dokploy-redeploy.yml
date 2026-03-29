@@ -1,0 +1,22 @@
+name: Trigger Dokploy Compose Redeploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: dokploy-compose-redeploy
+  cancel-in-progress: true
+
+jobs:
+  redeploy:
+    if: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Dokploy redeploy hook
+        env:
+          DOKPLOY_REDEPLOY_HOOK_URL: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL }}
+        run: |
+          curl --fail --show-error --silent -X POST "$DOKPLOY_REDEPLOY_HOOK_URL"

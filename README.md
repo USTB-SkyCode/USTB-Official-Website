@@ -36,7 +36,7 @@ npm run build         # 资源构建 + wasm + Vite 全量构建
 
 ## 生产构建与容器化
 
-前端作为独立容器（Dokploy Application）部署，后端 Caddy 边缘通过 `reverse_proxy` 转发请求到前端容器。
+前端作为与后端同一 Dokploy Compose 栈中的 `frontend` 服务部署，后端 Caddy 边缘通过 `reverse_proxy` 转发请求到前端容器。
 
 ### Dockerfile 三阶段构建
 
@@ -46,16 +46,14 @@ Stage 2 (frontend-builder) — node:22-slim + npm ci + vite build → dist/
 Stage 3 (runtime)       — caddy:2-alpine 静态服务 → :80
 ```
 
-### 构建与推送
+### 构建与验证
 
 ```bash
 # 本地构建测试
 docker build -t world-frontend .
-
-# 构建并推送到镜像仓库（Dokploy 拉取）
-docker build -t registry.your-domain.com/world-frontend:latest .
-docker push registry.your-domain.com/world-frontend:latest
 ```
+
+生产部署时，后端仓库中的 `deploy/prod/docker-compose.yml` 会直接把前端 GitHub 仓库作为 `frontend` 服务的构建上下文；只要这份 Compose 被重新部署，Docker 就会重新从该 GitHub 仓库拉取前端源码并构建 `frontend` 服务。
 
 ### 前端容器最小配置
 
@@ -69,13 +67,18 @@ docker push registry.your-domain.com/world-frontend:latest
 
 ### 与后端的对接
 
-1. 前端容器需在后端 compose 的同一 Docker 网络中可达
-2. 后端 `.env` 中设置 `FRONTEND_UPSTREAM=http://frontend:80`（默认值）
-3. 后端 Caddy 边缘将非后端请求 `reverse_proxy` 到前端容器
-4. 缓存策略由边缘 Caddy 控制：
+1. 后端 compose 中的 `frontend` 服务默认从 `https://github.com/USTB-SkyCode/USTB-Official-Website.git#main` 构建
+2. 前后端容器在同一 compose 网络中运行
+3. 后端 `.env` 中 `FRONTEND_UPSTREAM` 默认使用 `http://frontend:80`
+4. 后端 Caddy 边缘将非后端请求 `reverse_proxy` 到前端容器
+5. 缓存策略由边缘 Caddy 控制：
    - `/assets/*`、`/model/*`、`/basic/*` → `immutable, max-age=1y`
    - `/resource/*` → `immutable, max-age=30d`
    - SPA 路由 → `no-store`
+
+Dokploy 自动监听的是绑定给这份 Compose 的后端仓库，不会直接监听前端仓库。前端仓库推送后的自动部署需要由 GitHub Action 调用同一个 Dokploy Compose 应用的 redeploy hook 完成，这样 Dokploy 才会重新部署这份 Compose，并重新构建 `frontend` 服务。
+
+`DOKPLOY_REDEPLOY_HOOK_URL` 使用部署者自己的 GitHub Secret。未配置该 Secret 时，workflow 会跳过，不会影响与该部署无关的使用者；需要自动部署的人在自己的仓库或 fork 中填入自己的 Dokploy redeploy hook 即可。
 
 完整部署流程见 [Official-backend/README.md](../Official-backend/README.md) 中的「生产部署全流程」。
 

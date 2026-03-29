@@ -201,12 +201,13 @@ function pickTargetBlock() {
   box-shadow: var(--theme-shadow-hero);
   backdrop-filter: blur(18px) saturate(120%);
   -webkit-backdrop-filter: blur(18px) saturate(120%);
+  color: rgb(255 255 255 / 96%);
   pointer-events: auto;
 }
 
 .campus-explorer__eyebrow {
   margin: 0 0 6px;
-  color: var(--theme-accent);
+  color: inherit;
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -215,14 +216,14 @@ function pickTargetBlock() {
 
 .campus-explorer__title {
   margin: 0;
-  color: var(--theme-text-strong);
+  color: inherit;
   font-size: clamp(1.8rem, 2.8vw, 2.4rem);
   line-height: 1.02;
 }
 
 .campus-explorer__copy {
   margin: 10px 0 0;
-  color: rgb(255 255 255 / 96%);
+  color: inherit;
   line-height: 1.6;
 }
 
@@ -237,7 +238,7 @@ function pickTargetBlock() {
   border: 1px solid color-mix(in srgb, var(--theme-border-strong) 76%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--theme-card-bg) 84%, white 12%);
-  color: var(--theme-text-strong);
+  color: inherit;
   padding: 10px 16px;
   font: inherit;
   cursor: pointer;
@@ -265,7 +266,7 @@ function pickTargetBlock() {
   padding: 6px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--theme-accent-soft) 36%, transparent);
-  color: var(--theme-text-strong);
+  color: inherit;
   font-size: 0.82rem;
 }
 
@@ -275,7 +276,7 @@ function pickTargetBlock() {
   gap: 8px 14px;
   margin: 18px 0 0;
   padding-left: 18px;
-  color: color-mix(in srgb, var(--theme-text-strong) 68%, var(--theme-text-muted));
+  color: inherit;
 }
 
 :global(html:not(.dark)) .campus-explorer__panel {

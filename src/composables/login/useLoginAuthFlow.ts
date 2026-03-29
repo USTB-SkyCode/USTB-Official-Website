@@ -124,14 +124,8 @@ export function useLoginAuthFlow(options: {
   function openAuthPopup(authHref: string, provider: string) {
     setAutoLoginGuard(provider)
 
-    const left = Math.max(
-      0,
-      Math.round(window.screenX + (window.outerWidth - POPUP_WIDTH) / 2),
-    )
-    const top = Math.max(
-      0,
-      Math.round(window.screenY + (window.outerHeight - POPUP_HEIGHT) / 2),
-    )
+    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - POPUP_WIDTH) / 2))
+    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - POPUP_HEIGHT) / 2))
     const popupFeatures = [
       'popup=yes',
       `width=${POPUP_WIDTH}`,

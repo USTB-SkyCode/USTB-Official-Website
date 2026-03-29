@@ -81,12 +81,19 @@ const {
 } = useSceneController()
 const mobileDevice = computed(() => isLikelyMobileDevice())
 
-const { showConfirm, isPopupCallback, popupRedirectTarget, completeLogin, onClick: onAuthClick, confirm, launchProvider } =
-  useLoginAuthFlow({
-    mobileDevice,
-    currentUser: computed(() => userStore.user),
-    fetchUser: () => userStore.fetchUser(),
-  })
+const {
+  showConfirm,
+  isPopupCallback,
+  popupRedirectTarget,
+  completeLogin,
+  onClick: onAuthClick,
+  confirm,
+  launchProvider,
+} = useLoginAuthFlow({
+  mobileDevice,
+  currentUser: computed(() => userStore.user),
+  fetchUser: () => userStore.fetchUser(),
+})
 
 provideFrameMode(pageFrameMode)
 const showLoginLoading = computed(() => isPopupCallback.value)

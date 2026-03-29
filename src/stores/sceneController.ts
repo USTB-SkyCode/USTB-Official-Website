@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
-import { createSceneExploreState, type HomeExploreMobileBlockAction } from '@/stores/scene/exploreState'
+import {
+  createSceneExploreState,
+  type HomeExploreMobileBlockAction,
+} from '@/stores/scene/exploreState'
 import { createSceneRuntimeState } from '@/stores/scene/runtimeState'
 
 export const useSceneControllerStore = defineStore('sceneController', () => {
