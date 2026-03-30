@@ -29,7 +29,7 @@ RUN npm ci
 COPY . .
 COPY --from=wasm-builder /build/core/pkg/ core/pkg/
 
-RUN npx vue-tsc --build && npx vite build
+RUN npm run build:resource && npx vue-tsc --build && npx vite build
 
 # ============================================
 # Stage 3 — Serve (Caddy static file server)

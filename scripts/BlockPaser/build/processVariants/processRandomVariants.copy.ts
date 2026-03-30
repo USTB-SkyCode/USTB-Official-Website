@@ -292,11 +292,11 @@ export async function processRandomVariants(context: ResourceContext): Promise<v
     }
   }
 
-  if (!fs.existsSync(context.assestDir)) {
-    fs.mkdirSync(context.assestDir, { recursive: true });
+  if (!fs.existsSync(context.assetsDir)) {
+    fs.mkdirSync(context.assetsDir, { recursive: true });
   }
 
-  const variantLutPath = path.join(context.assestDir, 'variant_lut.png');
+  const variantLutPath = path.join(context.assetsDir, 'variant_lut.png');
   fs.writeFileSync(variantLutPath, PNG.sync.write(png));
 
   const legacyPaths = [

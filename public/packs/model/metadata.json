@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-03-30T15:07:39.328Z",
+  "key": "minecraft16",
+  "label": "Minecraft Default (16px)",
+  "description": "原版 16px 资源基线。",
+  "order": 0,
+  "directory": "model",
+  "default": true,
+  "maxTextureSize": 16,
+  "labPbr": false,
+  "packRoot": "/packs/model",
+  "sourcePacks": [
+    "minecraft"
+  ]
+}

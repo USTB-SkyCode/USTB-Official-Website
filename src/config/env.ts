@@ -10,12 +10,6 @@ type RuntimeAppConfig = {
   APP_BASE_URL?: string
   SKIN_API_BASE_URL?: string
   MCA_BASE_URL?: string
-  MODEL_BASE_URL?: string
-  MODEL_COMPILED_BASE_URL?: string
-  MODEL_ASSET_BASE_URL?: string
-  BASIC_BASE_URL?: string
-  BASIC_COMPILED_BASE_URL?: string
-  BASIC_ASSET_BASE_URL?: string
   SKIN_BASE_URL?: string
   DEV_BACKEND_PROXY_ENABLED?: boolean | string
 }
@@ -50,12 +44,6 @@ export function getEnvConfig() {
     appBaseUrl: stripTrailingSlash(rawAppBase) || window.location.origin,
     skinApiBaseUrl: stripTrailingSlash(rawSkinApiBase),
     mcaBaseUrl: stripTrailingSlash(appConfig.MCA_BASE_URL),
-    modelBaseUrl: stripTrailingSlash(appConfig.MODEL_BASE_URL),
-    modelCompiledBaseUrl: stripTrailingSlash(appConfig.MODEL_COMPILED_BASE_URL),
-    modelAssetBaseUrl: stripTrailingSlash(appConfig.MODEL_ASSET_BASE_URL),
-    basicBaseUrl: stripTrailingSlash(appConfig.BASIC_BASE_URL),
-    basicCompiledBaseUrl: stripTrailingSlash(appConfig.BASIC_COMPILED_BASE_URL),
-    basicAssetBaseUrl: stripTrailingSlash(appConfig.BASIC_ASSET_BASE_URL),
     skinBaseUrl: stripTrailingSlash(appConfig.SKIN_BASE_URL),
     devBackendProxyEnabled: readBoolean(appConfig.DEV_BACKEND_PROXY_ENABLED),
   }

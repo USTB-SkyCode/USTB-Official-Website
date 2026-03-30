@@ -4,7 +4,7 @@ import { processRandomVariants } from './build/processVariants'
 import { generateBlockProperties } from './build/generateProperties'
 import { copyColormaps } from './build/copyColormaps'
 import { optimizeContext } from './build/optimization'
-import { getResourceContexts } from './build/core/config'
+import { getResourceContexts, syncResourcePackArtifacts } from './build/core/config'
 import type { ResourceContext } from './build/core/types'
 import { Logger } from './build/core/Logger'
 
@@ -33,6 +33,7 @@ async function runBuildPipeline(context: ResourceContext): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  syncResourcePackArtifacts()
   const contexts = getResourceContexts()
 
   for (const context of contexts) {

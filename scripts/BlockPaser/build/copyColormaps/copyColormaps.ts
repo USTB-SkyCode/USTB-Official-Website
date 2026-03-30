@@ -7,7 +7,7 @@ export async function copyColormaps(context: ResourceContext): Promise<void> {
     const colormapDir = 'assets/minecraft/textures/colormap';
     const targets = ['grass.png', 'foliage.png'];
 
-    const outputDir = context.assestDir;
+        const outputDir = context.assetsDir;
     const legacyIntermediateDir = path.resolve(context.intermediateDir, 'colormap');
     const legacyNestedDir = path.resolve(context.outputModelDir, colormapDir);
 

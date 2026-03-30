@@ -1,8 +1,10 @@
 import type { ResourceDefinition } from '@/engine/config'
 
 export type ResourceRuntimeEndpoints = {
-  compiledBase: string
-  assestBase: string
+  packRoot?: string
+  compiledBase?: string
+  assetsBase?: string
+  metadataUrl?: string
   textureManifestUrl?: string
   textureBinaryUrl?: string
   resourceBinaryUrl?: string
@@ -12,8 +14,10 @@ export type ResourceRuntimeEndpoints = {
 
 export type ResolvedResourceEndpoints = {
   cacheKey: string
+  packRoot: string
   compiledBase: string
-  assestBase: string
+  assetsBase: string
+  metadataUrl: string
   textureManifestUrl: string
   textureBinaryUrl: string
   resourceBinaryUrl: string
@@ -47,33 +51,39 @@ function getRequiredResourceEndpoints(resource: ResourceDefinition) {
   if (!endpoints) {
     throw new Error(`Resource '${resource.key}' is missing explicit ENDPOINTS configuration`)
   }
-  if (!endpoints.compiledBase) {
-    throw new Error(`Resource '${resource.key}' is missing ENDPOINTS.compiledBase`)
-  }
-  if (!endpoints.assestBase) {
-    throw new Error(`Resource '${resource.key}' is missing ENDPOINTS.assestBase`)
+
+  const packRoot = endpoints.packRoot ?? resource.MODELS
+  if (!packRoot) {
+    throw new Error(`Resource '${resource.key}' is missing ENDPOINTS.packRoot`)
   }
 
-  return endpoints
+  return {
+    ...endpoints,
+    packRoot,
+  }
 }
 
 export function resolveResourceEndpoints(resource: ResourceDefinition): ResolvedResourceEndpoints {
   const overrides = getRequiredResourceEndpoints(resource)
-  const compiledBase = normalizeBasePath(overrides.compiledBase)
-  const assestBase = normalizeBasePath(overrides.assestBase)
+  const packRoot = normalizeBasePath(overrides.packRoot)
+  const compiledBase = normalizeBasePath(overrides.compiledBase ?? joinUrl(packRoot, 'compiled'))
+  const assetsBase = normalizeBasePath(overrides.assetsBase ?? joinUrl(packRoot, 'assets'))
+  const metadataUrl = overrides.metadataUrl ?? joinUrl(packRoot, 'metadata.json')
   const textureManifestUrl =
     overrides.textureManifestUrl ?? joinUrl(compiledBase, 'textures.manifest.bin.deflate')
   const textureBinaryUrl =
     overrides.textureBinaryUrl ?? joinUrl(compiledBase, 'textures.bin.deflate')
   const resourceBinaryUrl =
     overrides.resourceBinaryUrl ?? joinUrl(compiledBase, 'resources.bin.deflate')
-  const variantLutUrl = overrides.variantLutUrl ?? joinUrl(assestBase, 'variant_lut.png')
-  const colormapBase = normalizeBasePath(overrides.colormapBase ?? assestBase)
+  const variantLutUrl = overrides.variantLutUrl ?? joinUrl(assetsBase, 'variant_lut.png')
+  const colormapBase = normalizeBasePath(overrides.colormapBase ?? assetsBase)
 
   return {
     cacheKey: resource.key,
+    packRoot,
     compiledBase,
-    assestBase,
+    assetsBase,
+    metadataUrl,
     textureManifestUrl,
     textureBinaryUrl,
     resourceBinaryUrl,
@@ -89,12 +99,14 @@ export function getResourceEndpointSignature(resource: ResourceDefinition): stri
   const endpoints = resolveResourceEndpoints(resource)
   return [
     endpoints.cacheKey,
+    endpoints.packRoot,
     endpoints.compiledBase,
     endpoints.textureManifestUrl,
     endpoints.textureBinaryUrl,
     endpoints.resourceBinaryUrl,
     endpoints.variantLutUrl,
-    endpoints.assestBase,
+    endpoints.assetsBase,
+    endpoints.metadataUrl,
     endpoints.colormapBase,
   ].join('|')
 }

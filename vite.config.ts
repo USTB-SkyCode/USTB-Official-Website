@@ -18,12 +18,6 @@ type RuntimeAppConfig = {
   APP_BASE_URL: string
   SKIN_API_BASE_URL: string
   MCA_BASE_URL: string
-  MODEL_BASE_URL: string
-  MODEL_COMPILED_BASE_URL: string
-  MODEL_ASSET_BASE_URL: string
-  BASIC_BASE_URL: string
-  BASIC_COMPILED_BASE_URL: string
-  BASIC_ASSET_BASE_URL: string
   SKIN_BASE_URL: string
   DEV_BACKEND_PROXY_ENABLED: boolean
 }
@@ -72,12 +66,6 @@ function readRuntimeAppConfig(projectRoot: string): RuntimeAppConfig {
     APP_BASE_URL: env.APP_BASE_URL?.trim() ?? '',
     SKIN_API_BASE_URL: env.SKIN_API_BASE_URL?.trim() ?? '',
     MCA_BASE_URL: env.MCA_BASE_URL?.trim() ?? '',
-    MODEL_BASE_URL: env.MODEL_BASE_URL?.trim() ?? '',
-    MODEL_COMPILED_BASE_URL: env.MODEL_COMPILED_BASE_URL?.trim() ?? '',
-    MODEL_ASSET_BASE_URL: env.MODEL_ASSET_BASE_URL?.trim() ?? '',
-    BASIC_BASE_URL: env.BASIC_BASE_URL?.trim() ?? '',
-    BASIC_COMPILED_BASE_URL: env.BASIC_COMPILED_BASE_URL?.trim() ?? '',
-    BASIC_ASSET_BASE_URL: env.BASIC_ASSET_BASE_URL?.trim() ?? '',
     SKIN_BASE_URL: env.SKIN_BASE_URL?.trim() ?? '',
     DEV_BACKEND_PROXY_ENABLED: false,
   }

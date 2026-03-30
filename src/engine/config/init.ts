@@ -6,6 +6,10 @@
  */
 
 import { getEnvConfig } from '@/config/env'
+import {
+  DEFAULT_RESOURCE_PACK_KEY,
+  RESOURCE_PACK_CATALOG,
+} from '@/generated/resourcePackCatalog'
 import { isLikelyMobileDevice } from '@/utils/platformCapabilities'
 
 export interface ResourceDefinition {
@@ -13,13 +17,19 @@ export interface ResourceDefinition {
   key: string
   /** 面向 UI 的显示名称。 */
   label: string
+  /** 资源包补充说明。 */
+  description?: string
+  /** public/packs 下的产物目录名。 */
+  DIRECTORY: string
   /** 资源包原生主纹理尺寸上限。 */
   MAX_TEXTURE_SIZE: number
   /** 模型根目录 URL。 */
   MODELS: string
   /** 是否启用 LabPBR 管线。 */
   LABPBR: boolean
-  /** 运行时资源入口，必须显式提供。 */
+  /** 原始资源包叠加顺序。数组顺序即构建读取顺序。 */
+  SOURCE_PACKS: readonly string[]
+  /** 运行时资源入口。 */
   ENDPOINTS: import('@/resource/endpoints').ResourceRuntimeEndpoints
 }
 
@@ -31,38 +41,19 @@ const ENGINE_PERSISTENCE_STORAGE_KEY = 'world-engine-persistence'
 const SAB_TRANSIENT_RING_BUFFER = 2
 const MOBILE_DEFAULT_LOAD_DISTANCE = 8
 
-const RESOURCE_PRESETS: ResourceDefinition[] = [
-  {
-    key: 'minecraft16',
-    label: 'Minecraft Default (16px)',
-    MAX_TEXTURE_SIZE: 16,
-    get MODELS() {
-      return getEnvConfig().modelBaseUrl
-    },
-    LABPBR: false,
-    get ENDPOINTS() {
-      return {
-        compiledBase: getEnvConfig().modelCompiledBaseUrl,
-        assestBase: getEnvConfig().modelAssetBaseUrl,
-      }
-    },
+const RESOURCE_PRESETS: ResourceDefinition[] = RESOURCE_PACK_CATALOG.map(entry => ({
+  key: entry.key,
+  label: entry.label,
+  description: entry.description || undefined,
+  DIRECTORY: entry.directory,
+  MAX_TEXTURE_SIZE: entry.maxTextureSize,
+  MODELS: entry.packRoot,
+  LABPBR: entry.labPbr,
+  SOURCE_PACKS: [...entry.sourcePacks],
+  ENDPOINTS: {
+    packRoot: entry.packRoot,
   },
-  {
-    key: 'hybrid128',
-    label: 'Hybrid PBR (128px)',
-    MAX_TEXTURE_SIZE: 128,
-    get MODELS() {
-      return getEnvConfig().basicBaseUrl
-    },
-    LABPBR: true,
-    get ENDPOINTS() {
-      return {
-        compiledBase: getEnvConfig().basicCompiledBaseUrl,
-        assestBase: getEnvConfig().basicAssetBaseUrl,
-      }
-    },
-  },
-]
+}))
 
 function resolveBootLoadDistance() {
   const fallbackLoadDistance = isLikelyMobileDevice()
@@ -152,7 +143,7 @@ export const ENGINE_INIT_CONFIG = {
 
   /** 资源包注册表与默认资源键。 */
   RESOURCE: {
-    DEFAULT_KEY: 'minecraft16',
+    DEFAULT_KEY: DEFAULT_RESOURCE_PACK_KEY,
     RESOURCES: RESOURCE_PRESETS,
   },
 }
