@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as zlib from 'zlib';
+import { pipeline } from 'stream/promises';
 import pako from 'pako';
 import { PNG } from 'pngjs';
 import type { ResourceContext } from '../core/types';
@@ -282,7 +284,7 @@ export async function mergeTextures(context: ResourceContext): Promise<void> {
   let processed = 0;
 
   const manifest: TextureManifestEntry[] = [];
-  const buffers: Buffer[] = [];
+  const rawFd = fs.openSync(binFile, 'w');
   let currentOffset = 0;
 
   for (const name of sortedNames) {
@@ -378,7 +380,7 @@ export async function mergeTextures(context: ResourceContext): Promise<void> {
         size: combined.length,
       });
 
-      buffers.push(combined);
+      fs.writeSync(rawFd, combined);
       currentOffset += combined.length;
     } catch (error) {
       console.error(`处理纹理 ${name} 时出错：`, error);
@@ -393,10 +395,17 @@ export async function mergeTextures(context: ResourceContext): Promise<void> {
   }
   fs.writeFileSync(texturePropertiesOutput, JSON.stringify(propsJson, null, 2));
 
-  const finalBuffer = Buffer.concat(buffers);
-  fs.writeFileSync(binFile, finalBuffer);
-  const compressed = Buffer.from(pako.deflate(finalBuffer));
-  fs.writeFileSync(binDeflateFile, compressed);
+  // Close raw binary (already written incrementally)
+  fs.closeSync(rawFd);
+  const rawSize = fs.statSync(binFile).size;
+
+  // Stream-compress: read raw → deflate → write compressed
+  await pipeline(
+    fs.createReadStream(binFile),
+    zlib.createDeflate(),
+    fs.createWriteStream(binDeflateFile),
+  );
+  const compressedSize = fs.statSync(binDeflateFile).size;
 
   const manifestJsonStr = JSON.stringify(
     {
@@ -415,6 +424,6 @@ export async function mergeTextures(context: ResourceContext): Promise<void> {
   fs.writeFileSync(manifestDeflateFile, manifestCompressed);
 
   Logger.success(`Texture packaging complete: ${manifest.length} textures.`);
-  Logger.info(`Raw Binary: ${binFile} (${(finalBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
-  Logger.info(`Compressed (Deflate): ${binDeflateFile} (${(compressed.length / 1024 / 1024).toFixed(2)} MB)`);
+  Logger.info(`Raw Binary: ${binFile} (${(rawSize / 1024 / 1024).toFixed(2)} MB)`);
+  Logger.info(`Compressed (Deflate): ${binDeflateFile} (${(compressedSize / 1024 / 1024).toFixed(2)} MB)`);
 }
