@@ -1,40 +1,36 @@
 # USTB Official Website (Frontend)
 
-基于 Vue 3 + Vite + Rust (WASM) 构建的前端项目。由于在正式环境中前端运行时高度依赖于后端的动态配置 (/config.js) 及其配套的内部防跨域代理等，因此**本项目主要推荐直接连同后端仓库使用 Dokploy Compose 进行一体化部署**。
+Vue 3 + Vite + Rust (WASM) 前端项目。生产部署由后端仓库的 Docker Compose 统一管理。
 
-## 生产部署 (Dokploy)
+## 生产部署
 
-**无需在前端单独配置和配置环境变量！**
-当你在 Dokploy 中部署后端对应的 docker-compose.yml 时，该 Compose 内部的 frontend 服务会自动从本前端仓库拉取包含构建环境的源码进行 docker build 并交付。
+本项目不需要独立部署。后端仓库的 `docker compose up -d` 会自动从本仓库拉取源码、构建镜像、并将前端服务纳入统一的 Compose 网络。
 
-所有的运行时挂载配置变量交由后端全局管控提供（不需要给本前端提供额外的 .env）。
+所有运行时配置（API 地址、域名等）由后端的 `/config.js` 动态注入，前端无需 `.env`。
 
-### 建立推送代码自动协同触发机制
+### 资源包编译
 
-此模式下由于后端系统直接接管了整个应用（通过前端上下文路径打包前端代码），Dokploy 本身只能监听到后端代码库变化；要想在前端推送代码后也实现服务器热更新，通过以下 GitHub Actions 集成即可：
+部署首次需要运行资源包编译。详见后端仓库 README 步骤 4。
 
-1. 在 Dokploy 面板中，拿到你部署后端建立的 **Compose 应用** 的 **Deploy Webhook URL**。
-2. 回到本前端 GitHub 仓库，前往 **Settings -> Secrets and variables -> Actions**。
-3. 新建一个名为 DOKPLOY_REDEPLOY_HOOK_URL 的 Repository Secret，将刚才的 Webhook URL 填入。
+### 推送自动重部署
 
-完成以上设置后，下一次向 main 分支提交前端或者直接通过 Github Action 合并代码，后端服务器所在的主机就会接收到热更新触发命令，利用最新的前端源码重新打包发布
+1. 在 Dokploy 面板复制 Compose 应用的 Deploy Webhook URL。
+2. 本仓库 Settings → Secrets → Actions 中新建 `DOKPLOY_REDEPLOY_HOOK_URL`。
+3. 推送 `main` 后自动触发后端 Compose 重部署，重建 frontend 服务。
 
----
+## 本地开发
 
-## 本地纯前端开发指南
-
-如果你需要完整接入本地https开发链路，详细配置请参阅： [这里](./docs/development/open-source-local-dev.md)。
-
-如果你主要是做 Vue 等前端相关的常规修改与静态预览测试,项目默认是伪https的localhost形式,仅在本地windows测试成立,其余平台不确定
-``bash
-# 1. 安装项目依赖
+```bash
 npm install
-
-# 2. 拉起本地带有 HMR 的开发服务器
 npm run dev
+```
 
-# (可选常见命令)
-npm run type-check   # 纯类型检查
-npm run build-only   # Vite 常规前端构建
-npm run build        # 附加引擎和 wasm 的终极全量发行构建
-``
+| 命令 | 说明 |
+|---|---|
+| `npm run dev` | 本地 HMR 开发服务器 |
+| `npm run type-check` | 类型检查 |
+| `npm run build-only` | Vite 前端构建 |
+| `npm run build` | 全量构建（含 WASM） |
+| `npm run build:resource` | 编译资源包到 `public/packs/` |
+
+完整本地 HTTPS 开发链路配置参见 [docs/development/open-source-local-dev.md](docs/development/open-source-local-dev.md)。
