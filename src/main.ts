@@ -13,28 +13,35 @@ import { useSceneControllerStore } from './stores/sceneController'
 import { useUserStore } from './stores/user'
 import { installGlobalErrorReporter } from './utils/errorReporter'
 import { getEngineTakeoverPolicy } from './utils/engineTakeoverPolicy'
+import { loadResourcePackCatalog } from './resource/catalog'
 
-const app = createApp(App)
-const pinia = createPinia()
+async function bootstrap() {
+  await loadResourcePackCatalog()
 
-installGlobalErrorReporter(app)
+  const app = createApp(App)
+  const pinia = createPinia()
 
-app.use(pinia)
-app.use(router)
+  installGlobalErrorReporter(app)
 
-const enginePersistenceStore = useEnginePersistenceStore(pinia)
-applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)
-subscribeEngineRuntimeConfig(nextConfig => {
-  enginePersistenceStore.setRuntimeConfig(nextConfig)
-})
+  app.use(pinia)
+  app.use(router)
 
-const sceneControllerStore = useSceneControllerStore(pinia)
-const engineTakeoverPolicy = getEngineTakeoverPolicy()
-sceneControllerStore.setTakeoverEnabled(engineTakeoverPolicy.supported)
-sceneControllerStore.setTakeoverBlockedReason(engineTakeoverPolicy.reason)
+  const enginePersistenceStore = useEnginePersistenceStore(pinia)
+  applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)
+  subscribeEngineRuntimeConfig(nextConfig => {
+    enginePersistenceStore.setRuntimeConfig(nextConfig)
+  })
 
-// 初始化用户数据
-const userStore = useUserStore(pinia)
-userStore.fetchUser()
+  const sceneControllerStore = useSceneControllerStore(pinia)
+  const engineTakeoverPolicy = getEngineTakeoverPolicy()
+  sceneControllerStore.setTakeoverEnabled(engineTakeoverPolicy.supported)
+  sceneControllerStore.setTakeoverBlockedReason(engineTakeoverPolicy.reason)
 
-app.mount('#app')
+  // 初始化用户数据
+  const userStore = useUserStore(pinia)
+  userStore.fetchUser()
+
+  app.mount('#app')
+}
+
+bootstrap()

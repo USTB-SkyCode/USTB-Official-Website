@@ -56,6 +56,10 @@ venv/
 core/target/
 core/pkg/
 
+# Build-generated artifacts
+public/packs/
+src/generated/
+
 # Profiling and analysis artifacts
 core/flamegraph.svg
 core/perf.data

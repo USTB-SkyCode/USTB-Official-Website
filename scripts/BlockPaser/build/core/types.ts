@@ -4,7 +4,6 @@ export interface ResourceDefinition {
   description?: string;
   DIRECTORY: string;
   MAX_TEXTURE_SIZE: number;
-  MODELS: string;
   LABPBR: boolean;
   SOURCE_PACKS: string[];
 }
@@ -30,7 +29,6 @@ export interface ResourceContext {
   intermediateDir: string;
   intermediateBinDir: string;
   compiledTextureDir: string;
-  metadataJsonPath: string;
   templatesJsonPath: string;
   patternsJsonPath: string;
   blocksJsonPath: string;

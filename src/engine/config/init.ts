@@ -6,10 +6,7 @@
  */
 
 import { getEnvConfig } from '@/config/env'
-import {
-  DEFAULT_RESOURCE_PACK_KEY,
-  RESOURCE_PACK_CATALOG,
-} from '@/generated/resourcePackCatalog'
+import { getResourcePackCatalog } from '@/resource/catalog'
 import { isLikelyMobileDevice } from '@/utils/platformCapabilities'
 
 export interface ResourceDefinition {
@@ -23,14 +20,10 @@ export interface ResourceDefinition {
   DIRECTORY: string
   /** 资源包原生主纹理尺寸上限。 */
   MAX_TEXTURE_SIZE: number
-  /** 模型根目录 URL。 */
-  MODELS: string
   /** 是否启用 LabPBR 管线。 */
   LABPBR: boolean
   /** 原始资源包叠加顺序。数组顺序即构建读取顺序。 */
   SOURCE_PACKS: readonly string[]
-  /** 运行时资源入口。 */
-  ENDPOINTS: import('@/resource/endpoints').ResourceRuntimeEndpoints
 }
 
 export const DEFAULT_CHUNK_SIZE = 16
@@ -41,19 +34,32 @@ const ENGINE_PERSISTENCE_STORAGE_KEY = 'world-engine-persistence'
 const SAB_TRANSIENT_RING_BUFFER = 2
 const MOBILE_DEFAULT_LOAD_DISTANCE = 8
 
-const RESOURCE_PRESETS: ResourceDefinition[] = RESOURCE_PACK_CATALOG.map(entry => ({
-  key: entry.key,
-  label: entry.label,
-  description: entry.description || undefined,
-  DIRECTORY: entry.directory,
-  MAX_TEXTURE_SIZE: entry.maxTextureSize,
-  MODELS: entry.packRoot,
-  LABPBR: entry.labPbr,
-  SOURCE_PACKS: [...entry.sourcePacks],
-  ENDPOINTS: {
-    packRoot: entry.packRoot,
-  },
-}))
+function buildResourcePresets(): {
+  defaultKey: string
+  resources: ResourceDefinition[]
+} {
+  const catalog = getResourcePackCatalog()
+  return {
+    defaultKey: catalog.defaultKey,
+    resources: catalog.packs.map(entry => ({
+      key: entry.key,
+      label: entry.label,
+      description: entry.description || undefined,
+      DIRECTORY: entry.directory,
+      MAX_TEXTURE_SIZE: entry.maxTextureSize,
+      LABPBR: entry.labPbr,
+      SOURCE_PACKS: [...entry.sourcePacks],
+    })),
+  }
+}
+
+let _resourceCache: ReturnType<typeof buildResourcePresets> | null = null
+function getResourcePresets() {
+  if (!_resourceCache) {
+    _resourceCache = buildResourcePresets()
+  }
+  return _resourceCache
+}
 
 function resolveBootLoadDistance() {
   const fallbackLoadDistance = isLikelyMobileDevice()
@@ -141,9 +147,12 @@ export const ENGINE_INIT_CONFIG = {
     MAX_TEXTURE_SIZE: 128,
   },
 
-  /** 资源包注册表与默认资源键。 */
-  RESOURCE: {
-    DEFAULT_KEY: DEFAULT_RESOURCE_PACK_KEY,
-    RESOURCES: RESOURCE_PRESETS,
+  /** 资源包注册表与默认资源键。延迟求值，需先完成 loadResourcePackCatalog()。 */
+  get RESOURCE() {
+    const { defaultKey, resources } = getResourcePresets()
+    return {
+      DEFAULT_KEY: defaultKey,
+      RESOURCES: resources,
+    }
   },
 }
