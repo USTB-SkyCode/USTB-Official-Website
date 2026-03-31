@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-30T15:07:39.328Z",
+  "generatedAt": "2026-03-31T02:20:24.431Z",
   "defaultKey": "minecraft16",
   "packs": [
     {
@@ -7,11 +7,10 @@
       "label": "Minecraft Default (16px)",
       "description": "原版 16px 资源基线。",
       "order": 0,
-      "directory": "model",
+      "directory": "minecraft",
       "default": true,
       "maxTextureSize": 16,
       "labPbr": false,
-      "packRoot": "/packs/model",
       "sourcePacks": [
         "minecraft"
       ]
@@ -21,11 +20,10 @@
       "label": "Hybrid PBR (128px)",
       "description": "当前默认的 128px 混合 PBR 资源组合。",
       "order": 1,
-      "directory": "basic",
+      "directory": "05pbr",
       "default": false,
       "maxTextureSize": 128,
       "labPbr": true,
-      "packRoot": "/packs/basic",
       "sourcePacks": [
         "05cube",
         "05redstone",
