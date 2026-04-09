@@ -148,6 +148,18 @@ float viewDepthFromDepth01(float depth01) {
     return (2.0 * n * f) / denom;
 }
 
+vec3 reconstructSkyViewDirection(vec2 uv, mat4 projectionMatrix) {
+    vec2 ndc = uv * 2.0 - 1.0;
+    float projX = max(abs(projectionMatrix[0][0]), 0.0001);
+    float projY = max(abs(projectionMatrix[1][1]), 0.0001);
+    return normalize(vec3(ndc.x / projX, ndc.y / projY, -1.0));
+}
+
+vec3 reconstructSkyWorldDirection(vec2 uv, mat4 viewMatrix, mat4 projectionMatrix) {
+    vec3 viewDir = reconstructSkyViewDirection(uv, projectionMatrix);
+    return normalize(transpose(mat3(viewMatrix)) * viewDir);
+}
+
 int getClusterIndex(float viewDepth, vec2 uv) {
     float nearZ = uClusterZParams.x;
     float farZ = uClusterZParams.y;
@@ -237,9 +249,8 @@ void main() {
 
     // 天空背景 (Procedural Sky + Clouds)
     if (frameUseReverseZ() ? (depth <= 0.000001) : (depth >= 0.999999)) {
-        float skyRayDepth = frameUseReverseZ() ? 0.9999 : 0.0001;
-        vec3 worldPos = reconstructPosition(skyRayDepth, vUV, uInverseViewProj);
-        vec3 V = normalize(worldPos - uViewPos.xyz);
+        // 不再通过“天空点 - 相机位置”重建方向，避免大世界坐标在移动端/Intel 上发生精度抵消。
+        vec3 V = reconstructSkyWorldDirection(vUV, uView, uProjection);
         vec3 L = normalize(-uSunDirection.xyz);
 
         // 1. 大气背景

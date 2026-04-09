@@ -94,8 +94,9 @@ vec4 getClouds(vec3 viewDir, vec3 sunDir, float time, float cloudCover) {
 
     // 将视线投影到固定高度平面, 构造云层采样坐标。
     float cloudHeight = 1000.0;
-    float safeViewY = max(viewDir.y, 0.05);
+    float safeViewY = max(viewDir.y, 0.08);
     vec2 skyPos = (viewDir.xz / safeViewY) * cloudHeight;
+    skyPos = clamp(skyPos, vec2(-16000.0), vec2(16000.0));
 
     // 风场偏移。
     vec2 wind = vec2(time * 20.0, time * 10.0);
@@ -123,7 +124,7 @@ vec4 getClouds(vec3 viewDir, vec3 sunDir, float time, float cloudCover) {
     float alpha = smoothstep(0.0, 0.4, density);
 
     // 贴近地平线时逐步淡出, 避免高频闪烁。
-    float horizonFade = smoothstep(0.0, 0.2, viewDir.y);
+    float horizonFade = smoothstep(0.03, 0.22, viewDir.y);
     alpha *= horizonFade;
 
     return vec4(finalCloudColor, alpha);
