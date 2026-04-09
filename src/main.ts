@@ -8,6 +8,7 @@ import '@/styles/shared-surfaces.css'
 import App from './App.vue'
 import router from './router'
 import { applyEngineRuntimeConfigPatch, subscribeEngineRuntimeConfig } from './config/runtime'
+import { useDarkStore } from './stores/dark'
 import { useEnginePersistenceStore } from './stores/enginePersistence'
 import { useSceneControllerStore } from './stores/sceneController'
 import { useUserStore } from './stores/user'
@@ -25,6 +26,9 @@ async function bootstrap() {
 
   app.use(pinia)
   app.use(router)
+
+  // Eagerly hydrate theme state so html theme classes/tokens are correct on every route.
+  useDarkStore(pinia)
 
   const enginePersistenceStore = useEnginePersistenceStore(pinia)
   applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)

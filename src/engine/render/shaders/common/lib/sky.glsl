@@ -94,7 +94,8 @@ vec4 getClouds(vec3 viewDir, vec3 sunDir, float time, float cloudCover) {
 
     // 将视线投影到固定高度平面, 构造云层采样坐标。
     float cloudHeight = 1000.0;
-    vec2 skyPos = (viewDir.xz / viewDir.y) * cloudHeight;
+    float safeViewY = max(viewDir.y, 0.05);
+    vec2 skyPos = (viewDir.xz / safeViewY) * cloudHeight;
 
     // 风场偏移。
     vec2 wind = vec2(time * 20.0, time * 10.0);

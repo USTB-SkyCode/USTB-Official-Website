@@ -237,7 +237,8 @@ void main() {
 
     // 天空背景 (Procedural Sky + Clouds)
     if (frameUseReverseZ() ? (depth <= 0.000001) : (depth >= 0.999999)) {
-        vec3 worldPos = reconstructPosition(0.0001, vUV, uInverseViewProj); // Use near plane for direction
+        float skyRayDepth = frameUseReverseZ() ? 0.9999 : 0.0001;
+        vec3 worldPos = reconstructPosition(skyRayDepth, vUV, uInverseViewProj);
         vec3 V = normalize(worldPos - uViewPos.xyz);
         vec3 L = normalize(-uSunDirection.xyz);
 
