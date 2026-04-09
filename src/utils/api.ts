@@ -87,7 +87,15 @@ export async function apiFetch<T = unknown>(
 
   const method = (cfg.method ?? 'GET').toString().toUpperCase()
   if (method !== 'GET') {
-    const token = getCookie('XSRF-TOKEN') ?? getCookie('X-CSRFToken') ?? getCookie('XSRF_TOKEN')
+    let token = getCookie('XSRF-TOKEN') ?? getCookie('X-CSRFToken') ?? getCookie('XSRF_TOKEN')
+    if (!token) {
+      try {
+        await initCsrf()
+      } catch {
+        console.warn('initCsrf failed')
+      }
+      token = getCookie('XSRF-TOKEN') ?? getCookie('X-CSRFToken') ?? getCookie('XSRF_TOKEN')
+    }
     if (token) {
       ;(cfg.headers as Record<string, unknown>)['X-CSRFToken'] = token
     }

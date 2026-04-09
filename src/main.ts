@@ -7,6 +7,7 @@ import '@/styles/shared-surfaces.css'
 
 import App from './App.vue'
 import router from './router'
+import { markAppBootstrapReady, reportAppBootstrapError } from './bootstrap/appBootstrap'
 import { applyEngineRuntimeConfigPatch, subscribeEngineRuntimeConfig } from './config/runtime'
 import { useDarkStore } from './stores/dark'
 import { useEnginePersistenceStore } from './stores/enginePersistence'
@@ -17,8 +18,6 @@ import { getEngineTakeoverPolicy } from './utils/engineTakeoverPolicy'
 import { loadResourcePackCatalog } from './resource/catalog'
 
 async function bootstrap() {
-  await loadResourcePackCatalog()
-
   const app = createApp(App)
   const pinia = createPinia()
 
@@ -30,22 +29,31 @@ async function bootstrap() {
   // Eagerly hydrate theme state so html theme classes/tokens are correct on every route.
   useDarkStore(pinia)
 
-  const enginePersistenceStore = useEnginePersistenceStore(pinia)
-  applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)
-  subscribeEngineRuntimeConfig(nextConfig => {
-    enginePersistenceStore.setRuntimeConfig(nextConfig)
-  })
-
-  const sceneControllerStore = useSceneControllerStore(pinia)
-  const engineTakeoverPolicy = getEngineTakeoverPolicy()
-  sceneControllerStore.setTakeoverEnabled(engineTakeoverPolicy.supported)
-  sceneControllerStore.setTakeoverBlockedReason(engineTakeoverPolicy.reason)
-
-  // 初始化用户数据
-  const userStore = useUserStore(pinia)
-  userStore.fetchUser()
-
   app.mount('#app')
+
+  try {
+    await loadResourcePackCatalog()
+
+    const enginePersistenceStore = useEnginePersistenceStore(pinia)
+    applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)
+    subscribeEngineRuntimeConfig(nextConfig => {
+      enginePersistenceStore.setRuntimeConfig(nextConfig)
+    })
+
+    const sceneControllerStore = useSceneControllerStore(pinia)
+    const engineTakeoverPolicy = getEngineTakeoverPolicy()
+    sceneControllerStore.setTakeoverEnabled(engineTakeoverPolicy.supported)
+    sceneControllerStore.setTakeoverBlockedReason(engineTakeoverPolicy.reason)
+
+    // 初始化用户数据
+    const userStore = useUserStore(pinia)
+    void userStore.fetchUser({ preserveGuest: true })
+
+    markAppBootstrapReady()
+  } catch (error) {
+    console.error('[App] bootstrap failed', error)
+    reportAppBootstrapError(error, '前端启动失败')
+  }
 }
 
 bootstrap()

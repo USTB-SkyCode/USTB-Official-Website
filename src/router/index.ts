@@ -25,9 +25,14 @@ router.beforeEach(async to => {
 
   const userStore = useUserStore()
 
+  if (userStore.isGuest) {
+    void userStore.fetchUser({ preserveGuest: true })
+    return true
+  }
+
   if (!userStore.user) {
     try {
-      await userStore.fetchUser()
+      await userStore.fetchUser({ preserveGuest: true })
     } catch {
       console.warn('fetch user failed')
     }

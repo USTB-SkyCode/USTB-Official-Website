@@ -6,7 +6,7 @@ import {
   canMaskAsUserPermission,
   isAdminPermission,
 } from '@/constants/userPermission'
-import apiFetch, { initCsrf } from '@/utils/api'
+import apiFetch from '@/utils/api'
 import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
 import {
   detectCharacterModelTypeFromSkinUrl,
@@ -19,6 +19,10 @@ const GUEST_SESSION_STORAGE_KEY = 'userGuestSession'
 type GuestSessionRecord = {
   active: true
   loginTime: string
+}
+
+export type FetchUserOptions = {
+  preserveGuest?: boolean
 }
 
 function readStoredAdminMask() {
@@ -174,23 +178,15 @@ export const useUserStore = defineStore('user', () => {
     return fetchPlayerSkinPromise
   }
 
-  async function fetchUser() {
-    if (isGuest.value) {
-      clearPlayerSkin()
-      return
-    }
-
+  async function fetchUser(options: FetchUserOptions = {}) {
     // 并发去重
     if (fetchUserPromise) return fetchUserPromise
 
+    const preserveGuest = options.preserveGuest ?? isGuest.value
+    const guestFallbackUser = isGuest.value ? user.value : null
+
     fetchUserPromise = (async () => {
       try {
-        try {
-          await initCsrf()
-        } catch {
-          console.warn('initCsrf failed')
-        }
-
         const r = await apiFetch('/api/users/me', { method: 'GET' })
         if (r.ok && r.body && typeof r.body === 'object' && 'data' in r.body) {
           const maybeData = (r.body as Record<string, unknown>)['data']
@@ -199,6 +195,14 @@ export const useUserStore = defineStore('user', () => {
           syncAdminMaskState()
           await fetchPlayerSkin()
         } else {
+          if (preserveGuest && guestFallbackUser?.provider === 'guest') {
+            user.value = guestFallbackUser
+            persistGuestSession(guestFallbackUser)
+            clearPlayerSkin()
+            syncAdminMaskState()
+            return
+          }
+
           user.value = null
           persistGuestSession(null)
           clearPlayerSkin()
@@ -206,6 +210,14 @@ export const useUserStore = defineStore('user', () => {
         }
       } catch (e) {
         console.warn('fetchUser failed', e)
+        if (preserveGuest && guestFallbackUser?.provider === 'guest') {
+          user.value = guestFallbackUser
+          persistGuestSession(guestFallbackUser)
+          clearPlayerSkin()
+          syncAdminMaskState()
+          return
+        }
+
         user.value = null
         persistGuestSession(null)
         clearPlayerSkin()

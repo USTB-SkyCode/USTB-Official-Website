@@ -32,7 +32,7 @@ function resolvePostLoginTarget(candidate: unknown) {
 export function useLoginAuthFlow(options: {
   mobileDevice: ComputedRef<boolean>
   currentUser: ComputedRef<User | null>
-  fetchUser: () => Promise<unknown> | unknown
+  fetchUser: (options?: { preserveGuest?: boolean }) => Promise<unknown> | unknown
 }) {
   const route = useRoute()
   const router = useRouter()
@@ -193,12 +193,12 @@ export function useLoginAuthFlow(options: {
     }
 
     try {
-      await options.fetchUser()
+      await options.fetchUser({ preserveGuest: false })
     } catch (error) {
       console.warn('popup auth: fetchUser failed', error)
     }
 
-    if (!options.currentUser.value) {
+    if (!options.currentUser.value || options.currentUser.value.provider === 'guest') {
       notify.error('登录状态同步失败，请重试')
       return
     }
@@ -247,12 +247,12 @@ export function useLoginAuthFlow(options: {
 
   async function finalizePopupCallback() {
     try {
-      await options.fetchUser()
+      await options.fetchUser({ preserveGuest: false })
     } catch (error) {
       console.warn('popup auth callback: fetchUser failed', error)
     }
 
-    const success = !!options.currentUser.value
+    const success = !!options.currentUser.value && options.currentUser.value.provider !== 'guest'
     emitPopupAuthResult({
       type: 'world-oauth-complete',
       success,

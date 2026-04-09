@@ -11,7 +11,6 @@ import {
 } from '@/config/runtime'
 import { DEBUG_FLAGS } from '@/config/debug'
 import { getResourceEndpointSignature, resolveResourceEndpoints } from '@/resource/endpoints'
-import { useDarkStore } from '@/stores/dark'
 import {
   classifyRuntimeConfigPatch,
   type EngineRuntimeConfigApplyResult,
@@ -62,6 +61,7 @@ import { loadRenderSessionModules } from './core/session/useRenderSessionModules
 import { useSessionLifecycle } from './core/session/useSessionLifecycle'
 import { usePerformanceStats } from './core/frame/usePerformanceStats'
 import { useChunkLoader } from './core/world/useChunkLoader' // 复用现有的 ChunkLoader Hook
+import { useEngineDayNightController } from './core/dayNight/useEngineDayNightController'
 import { resolveSceneCameraPreset } from '@/config/scene'
 import type { PlayerRigMotionBehavior } from '@/engine/world/game/PlayerRig'
 
@@ -113,7 +113,6 @@ type EngineDebugWindow = Window & {
 
 export function useEngine(options: UseEngineOptions = {}) {
   const syncDayNightWithTheme = options.syncDayNightWithTheme ?? true
-  const darkStore = useDarkStore()
   const enableRuntimeDebug = options.enableRuntimeDebug ?? DEBUG_FLAGS.runtime
   const initialWorldInteractionEnabled = options.enableWorldInteraction ?? true
   const initialCanvasInputEnabled = options.enableCanvasInput ?? true
@@ -125,9 +124,6 @@ export function useEngine(options: UseEngineOptions = {}) {
 
   // 1. 基础状态
   const debugStatus = ref('Initializing...')
-  const dayNightMode = ref<DayNightCycleMode>('realtime-beijing')
-  const fixedTimeHours = ref(20)
-  const realtimeOffsetHours = ref(0)
   const worldInteractionEnabled = ref(initialWorldInteractionEnabled)
   const canvasInputEnabled = ref(initialCanvasInputEnabled)
   const runtimeConfigSnapshot = ref(getEngineRuntimeConfig())
@@ -224,6 +220,17 @@ export function useEngine(options: UseEngineOptions = {}) {
 
   // 3. 实例化核心管理器 (Singletons within the scope of this hook usage)
   const dayNightCycle = new DayNightCycle()
+  const {
+    dayNightMode,
+    fixedTimeHours,
+    realtimeOffsetHours,
+    applyDayNightMode,
+    applyFixedTimeHours,
+    applyRealtimeOffsetHours,
+  } = useEngineDayNightController({
+    dayNightCycle,
+    syncWithTheme: syncDayNightWithTheme,
+  })
   const csmCalculator = new CSMCalculator()
   const renderQueueBuilder = new RenderQueueBuilder()
   const characterModelScale = GAME_CONFIG.WORLD.PLAYER.MODEL_WORLD_HEIGHT / CHARACTER_LOCAL_HEIGHT
@@ -958,64 +965,6 @@ export function useEngine(options: UseEngineOptions = {}) {
     refreshTakeoverUi3dStaging()
   })
 
-  watch(
-    () => darkStore.themeMode,
-    themeMode => {
-      if (!syncDayNightWithTheme) {
-        return
-      }
-
-      if (
-        dayNightMode.value !== 'realtime-beijing' &&
-        dayNightMode.value !== 'fixed-midnight' &&
-        dayNightMode.value !== 'fixed-time'
-      ) {
-        return
-      }
-
-      if (themeMode === 'dark') {
-        dayNightMode.value = 'fixed-midnight'
-        dayNightCycle.setMode('fixed-midnight')
-        return
-      }
-
-      if (themeMode === 'light') {
-        dayNightMode.value = 'fixed-time'
-        dayNightCycle.setFixedTimeHours(12)
-        dayNightCycle.setMode('fixed-time')
-        return
-      }
-
-      dayNightMode.value = 'realtime-beijing'
-      dayNightCycle.setRealtimeOffsetHours(realtimeOffsetHours.value)
-      dayNightCycle.setMode('realtime-beijing')
-    },
-    { immediate: true },
-  )
-
-  function applyDayNightMode(mode: DayNightCycleMode) {
-    dayNightMode.value = mode
-    dayNightCycle.setMode(mode)
-    if (mode === 'fixed-time') {
-      dayNightCycle.setFixedTimeHours(fixedTimeHours.value)
-      return
-    }
-
-    if (mode === 'realtime-beijing') {
-      dayNightCycle.setRealtimeOffsetHours(realtimeOffsetHours.value)
-    }
-  }
-
-  function applyFixedTimeHours(hours: number) {
-    fixedTimeHours.value = Math.min(24, Math.max(0, hours))
-    dayNightCycle.setFixedTimeHours(fixedTimeHours.value)
-  }
-
-  function applyRealtimeOffsetHours(hours: number) {
-    realtimeOffsetHours.value = hours
-    dayNightCycle.setRealtimeOffsetHours(hours)
-  }
-
   function resetFirstPersonHandPose() {
     firstPersonHandOffset.value = { ...GAME_CONFIG.WORLD.PLAYER.FIRST_PERSON_HAND_OFFSET }
     firstPersonHandRotation.value = { ...GAME_CONFIG.WORLD.PLAYER.FIRST_PERSON_HAND_ROTATION }
@@ -1058,9 +1007,9 @@ export function useEngine(options: UseEngineOptions = {}) {
     takeoverSurfaceRenderAdapterSnapshot: readonly(takeoverSurfaceRenderAdapterSnapshot),
     takeoverSurfaceUi3dStagingSnapshot: readonly(takeoverSurfaceUi3dStagingSnapshot),
     takeoverUi3dSubmissionState: readonly(takeoverUi3dSubmissionState),
-    dayNightMode: readonly(dayNightMode),
-    fixedTimeHours: readonly(fixedTimeHours),
-    realtimeOffsetHours: readonly(realtimeOffsetHours),
+    dayNightMode,
+    fixedTimeHours,
+    realtimeOffsetHours,
     isCameraAnimationActive: readonly(isCameraAnimationActive),
     cameraAnimationProgress: readonly(cameraAnimationProgress),
 

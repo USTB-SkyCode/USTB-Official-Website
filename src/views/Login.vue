@@ -92,7 +92,7 @@ const {
 } = useLoginAuthFlow({
   mobileDevice,
   currentUser: computed(() => userStore.user),
-  fetchUser: () => userStore.fetchUser(),
+  fetchUser: options => userStore.fetchUser(options),
 })
 
 provideFrameMode(pageFrameMode)
