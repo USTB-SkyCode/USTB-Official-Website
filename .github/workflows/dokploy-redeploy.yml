@@ -12,11 +12,15 @@ concurrency:
 
 jobs:
   redeploy:
-    if: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL != '' }}
     runs-on: ubuntu-latest
+    env:
+      DOKPLOY_REDEPLOY_HOOK_URL: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL }}
     steps:
+      - name: Skip when redeploy hook secret is missing
+        if: ${{ env.DOKPLOY_REDEPLOY_HOOK_URL == '' }}
+        run: echo "DOKPLOY_REDEPLOY_HOOK_URL is not set; skipping redeploy trigger."
+
       - name: Trigger Dokploy redeploy hook
-        env:
-          DOKPLOY_REDEPLOY_HOOK_URL: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL }}
+        if: ${{ env.DOKPLOY_REDEPLOY_HOOK_URL != '' }}
         run: |
           curl --fail --show-error --silent -X POST "$DOKPLOY_REDEPLOY_HOOK_URL"
