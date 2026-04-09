@@ -16,6 +16,11 @@ jobs:
     env:
       DOKPLOY_REDEPLOY_HOOK_URL: ${{ secrets.DOKPLOY_REDEPLOY_HOOK_URL }}
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
       - name: Skip when redeploy hook secret is missing
         if: ${{ env.DOKPLOY_REDEPLOY_HOOK_URL == '' }}
         run: echo "DOKPLOY_REDEPLOY_HOOK_URL is not set; skipping redeploy trigger."
@@ -23,9 +28,41 @@ jobs:
       - name: Trigger Dokploy redeploy hook
         if: ${{ env.DOKPLOY_REDEPLOY_HOOK_URL != '' }}
         run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            cp "$GITHUB_EVENT_PATH" dokploy-payload.json
+          else
+            changed_files_json="$(git show --name-only --format= "$GITHUB_SHA" | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+            commit_message="$(git log -1 --pretty=%s "$GITHUB_SHA")"
+
+            jq -n \
+              --arg ref "refs/heads/$GITHUB_REF_NAME" \
+              --arg sha "$GITHUB_SHA" \
+              --arg message "$commit_message" \
+              --argjson modified "$changed_files_json" \
+              '{
+                ref: $ref,
+                head_commit: {
+                  id: $sha,
+                  message: $message
+                },
+                commits: [
+                  {
+                    id: $sha,
+                    message: $message,
+                    modified: $modified,
+                    added: [],
+                    removed: []
+                  }
+                ]
+              }' > dokploy-payload.json
+          fi
+
           http_code="$(curl --show-error --silent --location \
             --output dokploy-response.json \
             --write-out '%{http_code}' \
+            --header 'Content-Type: application/json' \
+            --header 'X-GitHub-Event: push' \
+            --data @dokploy-payload.json \
             -X POST "$DOKPLOY_REDEPLOY_HOOK_URL")"
           cat dokploy-response.json
 

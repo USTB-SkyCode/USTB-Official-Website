@@ -14,9 +14,9 @@ Vue 3 + Vite + Rust (WASM) 前端项目。生产部署由后端仓库的 Docker 
 
 ### 推送自动重部署
 
-1. 在 Dokploy 面板复制 Compose 应用的 Deploy Webhook URL。
+1. 在 Dokploy 的 Compose 服务页面进入 Deployments，复制 Webhook URL（形如 `/api/deploy/compose/<refreshToken>` 的自动部署 webhook）。
 2. 本仓库 Settings → Secrets → Actions 中新建 `DOKPLOY_REDEPLOY_HOOK_URL`。
-3. 推送 `main` 后自动触发后端 Compose 重部署，重建 frontend 服务。
+3. 推送 `main` 后 GitHub Actions 会把这次 push 的 GitHub webhook payload 转发给 Dokploy，从而触发后端 Compose 重部署，重建 frontend 服务。
 
 ## 本地开发
 
