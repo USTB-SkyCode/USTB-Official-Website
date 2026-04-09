@@ -23,4 +23,18 @@ jobs:
       - name: Trigger Dokploy redeploy hook
         if: ${{ env.DOKPLOY_REDEPLOY_HOOK_URL != '' }}
         run: |
-          curl --fail --show-error --silent -X POST "$DOKPLOY_REDEPLOY_HOOK_URL"
+          http_code="$(curl --show-error --silent --location \
+            --output dokploy-response.json \
+            --write-out '%{http_code}' \
+            -X POST "$DOKPLOY_REDEPLOY_HOOK_URL")"
+          cat dokploy-response.json
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::Dokploy redeploy hook returned HTTP $http_code"
+            exit 1
+          fi
+
+          if grep -q '"message":"Branch Not Match"' dokploy-response.json; then
+            echo "::error::Dokploy rejected the webhook with Branch Not Match. Verify that DOKPLOY_REDEPLOY_HOOK_URL is the Compose app Deploy Webhook and that the Dokploy source branch is set to main."
+            exit 1
+          fi
