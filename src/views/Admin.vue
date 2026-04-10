@@ -195,6 +195,215 @@
               </table>
             </div>
           </article>
+
+          <article class="panel-card panel-card--full glass-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker section-kicker">Scene Camera Presets</p>
+                <h2>场景机位预设</h2>
+              </div>
+              <button
+                class="panel-button panel-button-ghost"
+                :disabled="loadingCameraPresets"
+                @click="loadSceneCameraPresets"
+              >
+                {{ loadingCameraPresets ? '刷新中...' : '刷新机位' }}
+              </button>
+            </div>
+
+            <div class="camera-preset-editor">
+              <div class="camera-preset-toolbar">
+                <label class="camera-preset-select-field">
+                  <span class="camera-preset-field-label">预设</span>
+                  <select v-model="selectedCameraPresetKey" class="field-input field-select">
+                    <option
+                      v-for="option in cameraPresetOptions"
+                      :key="option.key"
+                      :value="option.key"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </label>
+
+                <div class="camera-preset-meta">
+                  <p class="helper-text camera-preset-description">
+                    {{ selectedCameraPresetDescription }}
+                  </p>
+                  <p class="helper-text">
+                    {{
+                      selectedCameraPresetRow?.hasOverride
+                        ? '当前使用后台覆盖值'
+                        : '当前使用前端默认值'
+                    }}
+                    · {{ formatPresetUpdatedAt(selectedCameraPresetRow?.updatedAt ?? null) }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="camera-form-grid">
+                <div class="vector-field">
+                  <span class="camera-preset-field-label">相机位置 Position</span>
+                  <div class="vector-input-row">
+                    <input
+                      v-model="cameraPresetForm.position.x"
+                      class="field-input"
+                      placeholder="X"
+                    />
+                    <input
+                      v-model="cameraPresetForm.position.y"
+                      class="field-input"
+                      placeholder="Y"
+                    />
+                    <input
+                      v-model="cameraPresetForm.position.z"
+                      class="field-input"
+                      placeholder="Z"
+                    />
+                  </div>
+                </div>
+
+                <div class="vector-field">
+                  <span class="camera-preset-field-label">观察目标 Look Target</span>
+                  <div class="vector-input-row">
+                    <input
+                      v-model="cameraPresetForm.lookTarget.x"
+                      class="field-input"
+                      placeholder="X"
+                    />
+                    <input
+                      v-model="cameraPresetForm.lookTarget.y"
+                      class="field-input"
+                      placeholder="Y"
+                    />
+                    <input
+                      v-model="cameraPresetForm.lookTarget.z"
+                      class="field-input"
+                      placeholder="Z"
+                    />
+                  </div>
+                </div>
+
+                <label class="camera-preset-select-field">
+                  <span class="camera-preset-field-label">视角模式</span>
+                  <select
+                    v-model="cameraPresetForm.perspectiveMode"
+                    class="field-input field-select"
+                  >
+                    <option
+                      v-for="option in cameraPerspectiveOptions"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="inline-actions">
+                <button
+                  class="panel-button panel-button-primary"
+                  :disabled="savingCameraPreset"
+                  @click="saveCameraPreset"
+                >
+                  {{ savingCameraPreset ? '保存中...' : '保存当前机位' }}
+                </button>
+                <button
+                  class="panel-button panel-button-ghost"
+                  @click="hydrateCameraPresetForm(selectedCameraPresetKey)"
+                >
+                  载入当前值
+                </button>
+                <button
+                  class="panel-button panel-button-text"
+                  :disabled="
+                    !selectedCameraPresetRow?.hasOverride ||
+                    resettingCameraPresetKey === selectedCameraPresetKey
+                  "
+                  @click="resetCameraPreset(selectedCameraPresetKey)"
+                >
+                  {{
+                    resettingCameraPresetKey === selectedCameraPresetKey
+                      ? '重置中...'
+                      : '重置为默认'
+                  }}
+                </button>
+                <span class="helper-text">
+                  手动输入每个机位的 Position、Look Target
+                  和视角模式；保存后刷新页面即可使用新的默认机位。
+                </span>
+              </div>
+
+              <div class="table-shell">
+                <table class="data-table camera-preset-table">
+                  <thead>
+                    <tr>
+                      <th>预设</th>
+                      <th>当前位置</th>
+                      <th>观察目标</th>
+                      <th class="col-status">视角</th>
+                      <th class="col-status">来源</th>
+                      <th>最近更新</th>
+                      <th class="col-actions">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in cameraPresetRows" :key="row.key">
+                      <td>
+                        <strong>{{ row.label }}</strong>
+                        <div class="helper-text">{{ row.key }}</div>
+                      </td>
+                      <td>
+                        <span class="camera-vector-text">{{
+                          formatVectorSummary(row.currentPose.position)
+                        }}</span>
+                      </td>
+                      <td>
+                        <span class="camera-vector-text">{{
+                          formatVectorSummary(row.currentPose.lookTarget)
+                        }}</span>
+                      </td>
+                      <td>{{ row.currentPose.perspectiveMode ?? '—' }}</td>
+                      <td>
+                        <span :class="row.hasOverride ? 'status-tag online' : 'status-tag offline'">
+                          {{ row.hasOverride ? '覆盖' : '默认' }}
+                        </span>
+                      </td>
+                      <td>{{ formatPresetUpdatedAt(row.updatedAt) }}</td>
+                      <td class="col-actions">
+                        <div class="row-actions">
+                          <button
+                            class="row-action-button"
+                            @click="hydrateCameraPresetForm(row.key)"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            class="row-action-button"
+                            @click="
+                              copyText(
+                                `${row.key}\nposition=${formatVectorSummary(row.currentPose.position)}\nlookTarget=${formatVectorSummary(row.currentPose.lookTarget)}`,
+                              )
+                            "
+                          >
+                            复制
+                          </button>
+                          <button
+                            class="row-action-button row-action-danger"
+                            :disabled="!row.hasOverride || resettingCameraPresetKey === row.key"
+                            @click="resetCameraPreset(row.key)"
+                          >
+                            {{ resettingCameraPresetKey === row.key ? '重置中...' : '重置' }}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
         </div>
 
         <article class="panel-card response-card glass-card">
@@ -227,8 +436,22 @@
 
 <script setup lang="ts">
 import Sortable, { type SortableEvent } from 'sortablejs'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import type { PlayerPerspectiveMode } from '@/engine/world/game/PlayerRig'
+import {
+  CAMERA_PRESET_OPTIONS,
+  applySceneCameraPresetOverride,
+  clearSceneCameraPresetOverride,
+  getSceneCameraPresetOverride,
+  isCameraPresetKey,
+  replaceSceneCameraPresetOverrides,
+  resolveDefaultSceneCameraPreset,
+  resolveSceneCameraPreset,
+  type CameraPresetKey,
+  type EngineCameraPresetPose,
+  type SceneCameraPresetOverride,
+} from '@/config/scene'
 import { useUserStore } from '@/stores/user'
 import { apiFetch } from '@/utils/api'
 import { formatRelativeTime, mapMcStatusRow } from '@/utils/mcStatus'
@@ -243,7 +466,27 @@ type ServerRow = {
 
 type ApiEnvelope<T = unknown> = {
   data: T | null
-  error: string | null
+  error: unknown
+}
+
+type Vector3Tuple = [number, number, number]
+
+type SceneCameraPresetRow = {
+  presetKey: CameraPresetKey
+  position: Vector3Tuple
+  lookTarget: Vector3Tuple
+  perspectiveMode: PlayerPerspectiveMode | null
+  updatedAt: string | null
+}
+
+type CameraPresetDisplayRow = {
+  key: CameraPresetKey
+  label: string
+  description: string
+  defaultPose: EngineCameraPresetPose
+  currentPose: EngineCameraPresetPose
+  hasOverride: boolean
+  updatedAt: string | null
 }
 
 const router = useRouter()
@@ -270,6 +513,24 @@ const loadingSync = ref(false)
 const deletingRowId = ref<number | null>(null)
 const orderDirty = ref(false)
 
+const loadingCameraPresets = ref(false)
+const savingCameraPreset = ref(false)
+const resettingCameraPresetKey = ref<CameraPresetKey | null>(null)
+const selectedCameraPresetKey = ref<CameraPresetKey>('login')
+const cameraPresetForm = reactive({
+  position: { x: '', y: '', z: '' },
+  lookTarget: { x: '', y: '', z: '' },
+  perspectiveMode: 'first-person' as PlayerPerspectiveMode,
+})
+
+const cameraPresetOptions = CAMERA_PRESET_OPTIONS
+const cameraPerspectiveOptions: Array<{ value: PlayerPerspectiveMode; label: string }> = [
+  { value: 'first-person', label: '第一人称' },
+  { value: 'spectator', label: '观察者' },
+  { value: 'third-person-back', label: '第三人称背后' },
+  { value: 'third-person-front', label: '第三人称前视' },
+]
+
 const ipPlaceholder = computed(() => {
   const base = 'abc.ustb.world'
   return inputId.value == null ? `${base}（新增时必填）` : `${base}（更新时可选）`
@@ -283,6 +544,142 @@ const currentOrderText = computed(() =>
     .join(', '),
 )
 const updateButtonLoading = computed(() => loadingAdd.value || loadingSort.value)
+const selectedCameraPresetDescription = computed(
+  () =>
+    cameraPresetOptions.find(option => option.key === selectedCameraPresetKey.value)?.description ??
+    '',
+)
+const cameraPresetRows = computed<CameraPresetDisplayRow[]>(() => {
+  return cameraPresetOptions.flatMap(option => {
+    const defaultPose = resolveDefaultSceneCameraPreset(option.key)
+    const currentPose = resolveSceneCameraPreset(option.key)
+    const override = getSceneCameraPresetOverride(option.key)
+    if (!defaultPose || !currentPose) {
+      return []
+    }
+
+    return [
+      {
+        ...option,
+        defaultPose,
+        currentPose,
+        hasOverride: Boolean(override),
+        updatedAt: override?.updatedAt ?? null,
+      },
+    ]
+  })
+})
+const selectedCameraPresetRow = computed(
+  () => cameraPresetRows.value.find(row => row.key === selectedCameraPresetKey.value) ?? null,
+)
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isPerspectiveMode(value: unknown): value is PlayerPerspectiveMode {
+  return (
+    value === 'first-person' ||
+    value === 'spectator' ||
+    value === 'third-person-back' ||
+    value === 'third-person-front'
+  )
+}
+
+function normalizeVectorTuple(value: unknown): Vector3Tuple | null {
+  if (!Array.isArray(value) || value.length !== 3) {
+    return null
+  }
+
+  const [x, y, z] = value
+  if (!isFiniteNumber(x) || !isFiniteNumber(y) || !isFiniteNumber(z)) {
+    return null
+  }
+
+  return [x, y, z]
+}
+
+function parseSceneCameraPresetRow(value: unknown): SceneCameraPresetRow | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const row = value as Record<string, unknown>
+  if (typeof row.presetKey !== 'string' || !isCameraPresetKey(row.presetKey)) {
+    return null
+  }
+
+  const position = normalizeVectorTuple(row.position)
+  const lookTarget = normalizeVectorTuple(row.lookTarget)
+  if (!position || !lookTarget) {
+    return null
+  }
+
+  return {
+    presetKey: row.presetKey,
+    position,
+    lookTarget,
+    perspectiveMode: isPerspectiveMode(row.perspectiveMode) ? row.perspectiveMode : null,
+    updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : null,
+  }
+}
+
+function formatNumericField(value: number) {
+  const rounded = Math.round(value * 1000) / 1000
+  return String(rounded)
+}
+
+function formatVectorSummary(value: readonly [number, number, number]) {
+  return value.map(item => formatNumericField(item)).join(', ')
+}
+
+function formatPresetUpdatedAt(value: string | null) {
+  return value ? formatRelativeTime(value) : '默认内置值'
+}
+
+function setVectorForm(
+  target: { x: string; y: string; z: string },
+  value: readonly [number, number, number],
+) {
+  target.x = formatNumericField(value[0])
+  target.y = formatNumericField(value[1])
+  target.z = formatNumericField(value[2])
+}
+
+function hydrateCameraPresetForm(presetKey: CameraPresetKey) {
+  const pose = resolveSceneCameraPreset(presetKey) ?? resolveDefaultSceneCameraPreset(presetKey)
+  if (!pose) {
+    return
+  }
+
+  selectedCameraPresetKey.value = presetKey
+  setVectorForm(cameraPresetForm.position, pose.position)
+  setVectorForm(cameraPresetForm.lookTarget, pose.lookTarget)
+  cameraPresetForm.perspectiveMode = pose.perspectiveMode ?? 'spectator'
+}
+
+function flattenApiError(error: unknown): string | null {
+  if (typeof error === 'string') {
+    return error
+  }
+
+  if (Array.isArray(error)) {
+    const parts = error.map(item => flattenApiError(item)).filter(Boolean)
+    return parts.length ? parts.join('；') : null
+  }
+
+  if (error && typeof error === 'object') {
+    const parts = Object.entries(error as Record<string, unknown>)
+      .map(([key, value]) => {
+        const message = flattenApiError(value)
+        return message ? `${key}: ${message}` : null
+      })
+      .filter((value): value is string => Boolean(value))
+    return parts.length ? parts.join('；') : null
+  }
+
+  return null
+}
 
 function onIdInput(event: Event) {
   const rawValue = (event.target as HTMLInputElement).value.trim()
@@ -299,7 +696,8 @@ function getApiErrorMessage(
   response: { body?: ApiEnvelope | null; status: number },
   fallback: string,
 ) {
-  return response.body?.error || `${fallback}（${response.status || 'network'}）`
+  const errorMessage = flattenApiError(response.body?.error)
+  return errorMessage || `${fallback}（${response.status || 'network'}）`
 }
 
 function buildServerAddress() {
@@ -359,10 +757,47 @@ async function loadStatuses() {
   }
 }
 
+async function loadSceneCameraPresets() {
+  loadingCameraPresets.value = true
+  try {
+    const response = await apiFetch<ApiEnvelope<unknown>>('/api/scene-camera-presets', {
+      method: 'GET',
+    })
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(response, '机位预设读取失败'))
+    }
+
+    const rows = Array.isArray(response.body?.data) ? response.body.data : []
+    const nextOverrides: Partial<Record<CameraPresetKey, SceneCameraPresetOverride>> = {}
+
+    for (const item of rows) {
+      const row = parseSceneCameraPresetRow(item)
+      if (!row) {
+        continue
+      }
+
+      nextOverrides[row.presetKey] = {
+        position: row.position,
+        lookTarget: row.lookTarget,
+        perspectiveMode: row.perspectiveMode ?? undefined,
+        updatedAt: row.updatedAt,
+      }
+    }
+
+    replaceSceneCameraPresetOverrides(nextOverrides)
+    hydrateCameraPresetForm(selectedCameraPresetKey.value)
+    result.value = JSON.stringify(response.body, null, 2)
+  } catch (error) {
+    notify.error(error instanceof Error ? error.message : '机位预设读取失败')
+  } finally {
+    loadingCameraPresets.value = false
+  }
+}
+
 async function syncAll() {
   loadingSync.value = true
   try {
-    await Promise.all([loadServers(), loadStatuses()])
+    await Promise.all([loadServers(), loadStatuses(), loadSceneCameraPresets()])
   } finally {
     loadingSync.value = false
   }
@@ -509,6 +944,101 @@ async function initServerDrag() {
 function destroyServerDrag() {
   serverTableSortable?.destroy()
   serverTableSortable = null
+}
+
+function parseCameraPresetInput(value: string, label: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    throw new Error(`${label}不能为空`)
+  }
+
+  const parsed = Number(trimmed)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${label}必须是数字`)
+  }
+
+  return parsed
+}
+
+function buildCameraPresetVectorPayload(
+  vector: { x: string; y: string; z: string },
+  label: string,
+): Vector3Tuple {
+  return [
+    parseCameraPresetInput(vector.x, `${label} X`),
+    parseCameraPresetInput(vector.y, `${label} Y`),
+    parseCameraPresetInput(vector.z, `${label} Z`),
+  ]
+}
+
+async function saveCameraPreset() {
+  savingCameraPreset.value = true
+  try {
+    const payload = {
+      position: buildCameraPresetVectorPayload(cameraPresetForm.position, '相机位置'),
+      lookTarget: buildCameraPresetVectorPayload(cameraPresetForm.lookTarget, '观察目标'),
+      perspectiveMode: cameraPresetForm.perspectiveMode,
+    }
+
+    const response = await apiFetch<ApiEnvelope<unknown>>(
+      `/api/scene-camera-presets/${selectedCameraPresetKey.value}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(response, '机位预设保存失败'))
+    }
+
+    const row = parseSceneCameraPresetRow(response.body?.data)
+    if (row) {
+      applySceneCameraPresetOverride(row.presetKey, {
+        position: row.position,
+        lookTarget: row.lookTarget,
+        perspectiveMode: row.perspectiveMode ?? undefined,
+        updatedAt: row.updatedAt,
+      })
+      hydrateCameraPresetForm(row.presetKey)
+    }
+
+    result.value = JSON.stringify(response.body, null, 2)
+    notify.success('机位预设已保存')
+  } catch (error) {
+    notify.error(error instanceof Error ? error.message : '机位预设保存失败')
+  } finally {
+    savingCameraPreset.value = false
+  }
+}
+
+async function resetCameraPreset(presetKey: CameraPresetKey) {
+  if (!window.confirm(`确认将 ${presetKey} 机位恢复为默认值吗？`)) {
+    return
+  }
+
+  resettingCameraPresetKey.value = presetKey
+  try {
+    const response = await apiFetch<ApiEnvelope<unknown>>(
+      `/api/scene-camera-presets/${presetKey}`,
+      {
+        method: 'DELETE',
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(response, '机位预设重置失败'))
+    }
+
+    clearSceneCameraPresetOverride(presetKey)
+    hydrateCameraPresetForm(presetKey)
+    result.value = JSON.stringify(response.body, null, 2)
+    notify.success('机位预设已重置为默认值')
+  } catch (error) {
+    notify.error(error instanceof Error ? error.message : '机位预设重置失败')
+  } finally {
+    resettingCameraPresetKey.value = null
+  }
 }
 
 async function createServer() {
@@ -686,6 +1216,14 @@ onMounted(() => {
     void syncAll()
   }
 })
+
+watch(
+  selectedCameraPresetKey,
+  nextPresetKey => {
+    hydrateCameraPresetForm(nextPresetKey)
+  },
+  { immediate: true },
+)
 
 watch(
   () => servers.value.map(item => `${item.id ?? 'null'}:${item.ip}`).join('|'),
@@ -867,6 +1405,10 @@ onBeforeUnmount(() => {
   gap: 20px;
 }
 
+.panel-card--full {
+  grid-column: 1 / -1;
+}
+
 .panel-card {
   padding: 22px;
 }
@@ -900,6 +1442,10 @@ onBeforeUnmount(() => {
   background: color-mix(in srgb, var(--theme-card-bg) 84%, transparent);
   color: var(--theme-text-strong);
   font: inherit;
+}
+
+.field-select {
+  appearance: none;
 }
 
 .field-input::placeholder {
@@ -980,6 +1526,62 @@ onBeforeUnmount(() => {
 .helper-warning {
   color: var(--theme-accent);
   font-weight: 600;
+}
+
+.camera-preset-editor {
+  display: grid;
+  gap: 16px;
+}
+
+.camera-preset-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.camera-preset-select-field,
+.vector-field {
+  display: grid;
+  gap: 8px;
+}
+
+.camera-preset-field-label {
+  color: var(--theme-text-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.camera-preset-meta {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.camera-preset-description {
+  margin: 0;
+}
+
+.camera-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 260px);
+  gap: 14px;
+  align-items: end;
+}
+
+.vector-input-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.camera-preset-table {
+  min-width: 980px;
+}
+
+.camera-vector-text {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .table-shell {
@@ -1133,6 +1735,11 @@ onBeforeUnmount(() => {
 
   .form-grid {
     grid-template-columns: 100px minmax(0, 1fr) 120px;
+  }
+
+  .camera-preset-toolbar,
+  .camera-form-grid {
+    grid-template-columns: 1fr;
   }
 
   .hero-actions {

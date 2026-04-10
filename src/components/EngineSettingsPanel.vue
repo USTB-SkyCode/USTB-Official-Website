@@ -24,19 +24,22 @@
           </span>
         </div>
         <div class="engine-setting-row__control engine-setting-row__control--stacked">
-          <select
-            class="engine-setting-select"
-            :value="resourceStore.activeKey"
-            @change="onResourcePackChange"
-          >
-            <option
-              v-for="resource in resourceStore.resources"
-              :key="resource.key"
-              :value="resource.key"
+          <div class="engine-setting-select-shell">
+            <select
+              class="engine-setting-select"
+              :value="resourceStore.activeKey"
+              @change="onResourcePackChange"
             >
-              {{ resource.label }}
-            </option>
-          </select>
+              <option
+                v-for="resource in resourceStore.resources"
+                :key="resource.key"
+                :value="resource.key"
+              >
+                {{ resource.label }}
+              </option>
+            </select>
+            <span class="engine-setting-select-shell__icon" aria-hidden="true"></span>
+          </div>
           <span class="engine-setting-hint"
             >{{ activeResourceLabel }} ·
             {{ hostRuntimeReady ? 'host ready' : 'host booting' }}</span
@@ -414,19 +417,36 @@ function toggleSmoothLighting() {
 
 <style scoped>
 .engine-settings-popover {
+  --engine-bg-solid: var(--theme-surface-glass-strong);
+
+  --engine-panel-surface: color-mix(in srgb, var(--engine-bg-solid) 84%, transparent);
+  --engine-panel-surface-strong: color-mix(in srgb, var(--engine-bg-solid) 92%, transparent);
+  --engine-panel-border: color-mix(in srgb, var(--theme-border-strong) 82%, transparent);
+  --engine-control-surface: color-mix(in srgb, var(--engine-bg-solid) 68%, transparent);
+  --engine-control-surface-strong: color-mix(in srgb, var(--engine-bg-solid) 82%, transparent);
+  --engine-control-border: color-mix(in srgb, var(--theme-border-strong) 70%, transparent);
+  --engine-focus-ring: color-mix(in srgb, var(--theme-accent) 32%, transparent);
+  --engine-muted-text: var(--theme-text-muted);
+
   display: grid;
   gap: 16px;
   width: min(380px, 72vw);
   max-height: min(68vh, 640px);
   overflow: auto;
   padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
+  border: 1px solid var(--engine-panel-border);
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 08%)),
-    color-mix(in srgb, var(--theme-card-bg) 88%, transparent);
-  box-shadow: 0 18px 46px rgb(15 23 42 / 18%);
-  backdrop-filter: blur(18px);
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-surface-glass-strong) 74%, transparent),
+      transparent
+    ),
+    var(--engine-panel-surface);
+  box-shadow: var(--theme-shadow-hero);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  color: var(--theme-text-strong);
   pointer-events: auto;
 }
 
@@ -444,10 +464,10 @@ function toggleSmoothLighting() {
 
 .engine-settings-close {
   padding: 6px 10px;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
+  border: 1px solid var(--engine-panel-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-card-bg) 60%, transparent);
-  color: var(--el-text-color-secondary);
+  background: var(--engine-control-surface);
+  color: var(--theme-text-muted);
   font: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -457,7 +477,7 @@ function toggleSmoothLighting() {
 .engine-settings-close:hover,
 .engine-settings-close:focus-visible {
   color: var(--theme-text-strong);
-  border-color: color-mix(in srgb, var(--theme-accent) 24%, var(--theme-border-strong));
+  border-color: var(--engine-focus-ring);
   outline: none;
 }
 
@@ -468,7 +488,7 @@ function toggleSmoothLighting() {
 
 .engine-setting-note {
   margin: 0;
-  color: var(--el-text-color-secondary);
+  color: var(--engine-muted-text);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -485,9 +505,13 @@ function toggleSmoothLighting() {
   display: grid;
   gap: 8px;
   padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 54%, transparent);
+  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 58%, transparent);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--theme-card-bg) 54%, transparent);
+  background: linear-gradient(
+    180deg,
+    var(--engine-control-surface-strong),
+    var(--engine-control-surface)
+  );
 }
 
 .engine-setting-row--toggle {
@@ -526,30 +550,60 @@ function toggleSmoothLighting() {
 
 .engine-setting-value {
   min-width: 50px;
-  color: var(--el-text-color-secondary);
+  color: var(--engine-muted-text);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .engine-setting-select {
+  appearance: none;
+  -webkit-appearance: none;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
+  padding: 11px 40px 11px 12px;
+  border: 1px solid var(--engine-control-border);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--theme-card-bg) 74%, transparent);
+  background: transparent;
   color: var(--theme-text-strong);
   font: inherit;
   font-size: 13px;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.engine-setting-select-shell {
+  position: relative;
+  width: 100%;
+}
+
+.engine-setting-select-shell__icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--theme-text-muted);
+  border-bottom: 2px solid var(--theme-text-muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.engine-setting-select:hover {
+  border-color: color-mix(in srgb, var(--theme-accent) 34%, var(--engine-control-border));
 }
 
 .engine-setting-select:focus-visible {
-  outline: 1px solid color-mix(in srgb, var(--theme-accent) 36%, transparent);
+  outline: 1px solid var(--engine-focus-ring);
   outline-offset: 2px;
 }
 
+.engine-setting-select option {
+  background: var(--theme-surface-glass-strong);
+  color: var(--theme-text-strong);
+}
+
 .engine-setting-hint {
-  color: var(--el-text-color-secondary);
+  color: var(--engine-muted-text);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -557,10 +611,10 @@ function toggleSmoothLighting() {
 .engine-toggle {
   min-width: 70px;
   padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 72%, transparent);
+  border: 1px solid var(--engine-control-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-card-bg) 64%, transparent);
-  color: var(--el-text-color-secondary);
+  background: var(--engine-control-surface);
+  color: var(--theme-text-muted);
   font: inherit;
   font-size: 12px;
   font-weight: 800;
@@ -569,7 +623,7 @@ function toggleSmoothLighting() {
 
 .engine-toggle.is-active {
   border-color: color-mix(in srgb, var(--theme-accent) 28%, transparent);
-  background: color-mix(in srgb, var(--theme-accent-soft) 42%, transparent);
+  background: color-mix(in srgb, var(--theme-accent-soft) 46%, var(--engine-control-surface));
   color: var(--theme-text-strong);
 }
 
@@ -594,7 +648,7 @@ function toggleSmoothLighting() {
 }
 
 .engine-setting-tooltip-anchor:focus-visible {
-  outline: 1px solid color-mix(in srgb, var(--theme-accent) 36%, transparent);
+  outline: 1px solid var(--engine-focus-ring);
   outline-offset: 2px;
 }
 
@@ -609,10 +663,10 @@ function toggleSmoothLighting() {
   transition:
     opacity 160ms ease,
     transform 160ms ease;
-  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 76%, transparent);
+  border: 1px solid var(--engine-panel-border);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--theme-card-bg) 96%, transparent);
-  box-shadow: 0 12px 32px rgb(15 23 42 / 16%);
+  background: var(--engine-panel-surface-strong);
+  box-shadow: var(--theme-shadow-soft);
   color: var(--theme-text-strong);
   font-size: 12px;
   font-weight: 500;
@@ -629,5 +683,50 @@ function toggleSmoothLighting() {
 
 .engine-tools-kicker {
   margin: 0;
+}
+
+@media (width <= 720px) {
+  .engine-settings-popover {
+    width: min(100vw - 24px, 420px);
+    max-height: min(82dvh, 720px);
+    padding: 14px;
+    border-radius: 20px 20px 16px 16px;
+  }
+
+  .engine-settings-group {
+    gap: 10px;
+  }
+
+  .engine-setting-row {
+    padding: 11px;
+    border-radius: 13px;
+  }
+
+  .engine-setting-row__label {
+    font-size: 12px;
+  }
+
+  .engine-setting-row__control--stacked {
+    gap: 8px;
+  }
+
+  .engine-setting-select {
+    padding: 12px 42px 12px 12px;
+    font-size: 14px;
+  }
+
+  .engine-setting-select-shell__icon {
+    right: 14px;
+  }
+
+  .engine-setting-hint,
+  .engine-setting-value {
+    font-size: 11px;
+  }
+
+  .engine-toggle {
+    min-width: 64px;
+    padding: 9px 11px;
+  }
 }
 </style>

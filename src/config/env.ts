@@ -12,6 +12,7 @@ type RuntimeAppConfig = {
   MCA_BASE_URL?: string
   SKIN_BASE_URL?: string
   DEV_BACKEND_PROXY_ENABLED?: boolean | string
+  SCENE_CAMERA_PRESET_OVERRIDES?: Record<string, unknown>
 }
 
 function stripTrailingSlash(value: string | undefined | null): string {
@@ -46,5 +47,6 @@ export function getEnvConfig() {
     mcaBaseUrl: stripTrailingSlash(appConfig.MCA_BASE_URL),
     skinBaseUrl: stripTrailingSlash(appConfig.SKIN_BASE_URL),
     devBackendProxyEnabled: readBoolean(appConfig.DEV_BACKEND_PROXY_ENABLED),
+    sceneCameraPresetOverrides: appConfig.SCENE_CAMERA_PRESET_OVERRIDES,
   }
 }

@@ -5,6 +5,7 @@ import type {
 } from '@/engine/world/control/PlayerMotionController'
 import { getEnvConfig } from '@/config/env'
 import type { TabKey } from '@/constants/tabs'
+import { shallowRef } from 'vue'
 
 export type SceneRuntimeProfileKind = 'shared-open-world'
 export type SceneRuntimeProfileKey = 'campus-open-world'
@@ -23,6 +24,23 @@ export type SceneConfigDefinition = {
 }
 
 export type CameraPresetKey = TabKey | 'login' | 'self'
+
+export type SceneCameraPresetOverride = {
+  position: [number, number, number]
+  lookTarget: [number, number, number]
+  perspectiveMode?: PlayerPerspectiveMode
+  updatedAt?: string | null
+}
+
+export type SceneCameraPresetOverrideMap = Partial<
+  Record<CameraPresetKey, SceneCameraPresetOverride>
+>
+
+export type SceneCameraPresetOption = {
+  key: CameraPresetKey
+  label: string
+  description: string
+}
 
 type SceneRuntimeProfileDefinition = {
   kind: SceneRuntimeProfileKind
@@ -91,7 +109,47 @@ const SCENE_DEFINITIONS: Record<string, SceneDefinition> = {
   },
 }
 
-const CAMERA_PRESETS: Record<CameraPresetKey, EngineCameraPresetPose> = {
+const CAMERA_PRESET_OPTIONS_BY_KEY: Record<CameraPresetKey, SceneCameraPresetOption> = {
+  login: {
+    key: 'login',
+    label: '登录页',
+    description: '访客进入站点后的初始第一人称机位。',
+  },
+  explore: {
+    key: 'explore',
+    label: '校园游览',
+    description: '主页校园游览 tab 的默认机位。',
+  },
+  schedule: {
+    key: 'schedule',
+    label: '主要活动',
+    description: '主页主要活动 tab 的悬浮观察机位。',
+  },
+  history: {
+    key: 'history',
+    label: '往期活动',
+    description: '主页往期活动 tab 的悬浮观察机位。',
+  },
+  latest: {
+    key: 'latest',
+    label: '最新动态',
+    description: '主页最新动态 tab 的悬浮观察机位。',
+  },
+  servers: {
+    key: 'servers',
+    label: '服务器列表',
+    description: '主页服务器列表 tab 的悬浮观察机位。',
+  },
+  self: {
+    key: 'self',
+    label: '个人主页',
+    description: '个人主页的第三人称前视机位。',
+  },
+}
+
+export const CAMERA_PRESET_OPTIONS = Object.values(CAMERA_PRESET_OPTIONS_BY_KEY)
+
+const CAMERA_PRESET_DEFAULTS: Record<CameraPresetKey, EngineCameraPresetPose> = {
   login: {
     position: [309, 199, 808],
     lookTarget: [310, 199, 808],
@@ -140,6 +198,204 @@ const CAMERA_PRESETS: Record<CameraPresetKey, EngineCameraPresetPose> = {
   }),
 }
 
+function cloneMotionBehavior(
+  motionBehavior: PlayerMotionBehaviorConfig | undefined,
+): PlayerMotionBehaviorConfig | undefined {
+  if (!motionBehavior) {
+    return undefined
+  }
+
+  return {
+    ...motionBehavior,
+    pitchRange: motionBehavior.pitchRange
+      ? ([...motionBehavior.pitchRange] as [number, number])
+      : undefined,
+    pitchRangeWhenAboveY: motionBehavior.pitchRangeWhenAboveY
+      ? {
+          y: motionBehavior.pitchRangeWhenAboveY.y,
+          pitchRange: [...motionBehavior.pitchRangeWhenAboveY.pitchRange] as [number, number],
+        }
+      : undefined,
+    movementBounds:
+      motionBehavior.movementBounds === null
+        ? null
+        : motionBehavior.movementBounds
+          ? { ...motionBehavior.movementBounds }
+          : undefined,
+  }
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function normalizePerspectiveMode(value: unknown): PlayerPerspectiveMode | undefined {
+  if (
+    value === 'first-person' ||
+    value === 'spectator' ||
+    value === 'third-person-back' ||
+    value === 'third-person-front'
+  ) {
+    return value
+  }
+
+  return undefined
+}
+
+function normalizeVector3(value: unknown): [number, number, number] | null {
+  if (!Array.isArray(value) || value.length !== 3) {
+    return null
+  }
+
+  const [x, y, z] = value
+  if (!isFiniteNumber(x) || !isFiniteNumber(y) || !isFiniteNumber(z)) {
+    return null
+  }
+
+  return [x, y, z]
+}
+
+function normalizeSceneCameraPresetOverride(value: unknown): SceneCameraPresetOverride | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const candidate = value as Record<string, unknown>
+  const position = normalizeVector3(candidate.position)
+  const lookTarget = normalizeVector3(candidate.lookTarget)
+  if (!position || !lookTarget) {
+    return null
+  }
+
+  return {
+    position,
+    lookTarget,
+    perspectiveMode: normalizePerspectiveMode(candidate.perspectiveMode),
+    updatedAt: typeof candidate.updatedAt === 'string' ? candidate.updatedAt : null,
+  }
+}
+
+export function isCameraPresetKey(value: string): value is CameraPresetKey {
+  return value in CAMERA_PRESET_DEFAULTS
+}
+
+const cameraPresetOverridesState = shallowRef<SceneCameraPresetOverrideMap>({})
+
+export function replaceSceneCameraPresetOverrides(nextOverrides: unknown) {
+  const normalized: SceneCameraPresetOverrideMap = {}
+  if (nextOverrides && typeof nextOverrides === 'object') {
+    for (const [rawKey, rawValue] of Object.entries(nextOverrides as Record<string, unknown>)) {
+      if (!isCameraPresetKey(rawKey)) {
+        continue
+      }
+
+      const override = normalizeSceneCameraPresetOverride(rawValue)
+      if (!override) {
+        continue
+      }
+
+      normalized[rawKey] = override
+    }
+  }
+
+  cameraPresetOverridesState.value = normalized
+}
+
+export function applySceneCameraPresetOverride(
+  presetKey: CameraPresetKey,
+  override: SceneCameraPresetOverride,
+) {
+  const normalized = normalizeSceneCameraPresetOverride(override)
+  if (!normalized) {
+    return
+  }
+
+  cameraPresetOverridesState.value = {
+    ...cameraPresetOverridesState.value,
+    [presetKey]: normalized,
+  }
+}
+
+export function clearSceneCameraPresetOverride(presetKey: CameraPresetKey) {
+  const nextOverrides = { ...cameraPresetOverridesState.value }
+  delete nextOverrides[presetKey]
+  cameraPresetOverridesState.value = nextOverrides
+}
+
+export function getSceneCameraPresetOverride(presetKey: CameraPresetKey) {
+  return cameraPresetOverridesState.value[presetKey] ?? null
+}
+
+function offsetMotionBehaviorByPosition(
+  motionBehavior: PlayerMotionBehaviorConfig | undefined,
+  defaultPosition: [number, number, number],
+  nextPosition: [number, number, number],
+): PlayerMotionBehaviorConfig | undefined {
+  const cloned = cloneMotionBehavior(motionBehavior)
+  if (!cloned) {
+    return undefined
+  }
+
+  const deltaX = nextPosition[0] - defaultPosition[0]
+  const deltaY = nextPosition[1] - defaultPosition[1]
+  const deltaZ = nextPosition[2] - defaultPosition[2]
+
+  if (cloned.movementBounds) {
+    cloned.movementBounds = {
+      ...cloned.movementBounds,
+      minX: cloned.movementBounds.minX + deltaX,
+      maxX: cloned.movementBounds.maxX + deltaX,
+      minY:
+        typeof cloned.movementBounds.minY === 'number'
+          ? cloned.movementBounds.minY + deltaY
+          : undefined,
+      maxY:
+        typeof cloned.movementBounds.maxY === 'number'
+          ? cloned.movementBounds.maxY + deltaY
+          : undefined,
+      minZ: cloned.movementBounds.minZ + deltaZ,
+      maxZ: cloned.movementBounds.maxZ + deltaZ,
+    }
+  }
+
+  if (cloned.pitchRangeWhenAboveY) {
+    cloned.pitchRangeWhenAboveY = {
+      y: cloned.pitchRangeWhenAboveY.y + deltaY,
+      pitchRange: [...cloned.pitchRangeWhenAboveY.pitchRange] as [number, number],
+    }
+  }
+
+  return cloned
+}
+
+function mergeSceneCameraPresetPose(
+  presetKey: CameraPresetKey,
+  preset: EngineCameraPresetPose,
+): EngineCameraPresetPose {
+  const override = getSceneCameraPresetOverride(presetKey)
+  const merged = clonePresetPose(preset)
+  if (!override) {
+    return merged
+  }
+
+  merged.position = [...override.position] as [number, number, number]
+  merged.lookTarget = [...override.lookTarget] as [number, number, number]
+  if (override.perspectiveMode) {
+    merged.perspectiveMode = override.perspectiveMode
+  }
+
+  const perspectiveChanged = Boolean(
+    override.perspectiveMode && override.perspectiveMode !== preset.perspectiveMode,
+  )
+  merged.motionBehavior = perspectiveChanged
+    ? undefined
+    : offsetMotionBehaviorByPosition(preset.motionBehavior, preset.position, merged.position)
+
+  return merged
+}
+
+replaceSceneCameraPresetOverrides(getEnvConfig().sceneCameraPresetOverrides)
+
 // ----------------------------------------------------------------------------
 // Resolvers
 // ----------------------------------------------------------------------------
@@ -184,21 +440,32 @@ function clonePresetPose(preset: EngineCameraPresetPose) {
     position: [...preset.position] as [number, number, number],
     lookTarget: [...preset.lookTarget] as [number, number, number],
     perspectiveMode: preset.perspectiveMode,
-    motionBehavior: preset.motionBehavior ? { ...preset.motionBehavior } : undefined,
+    motionBehavior: cloneMotionBehavior(preset.motionBehavior),
   }
 }
 
-export function resolveSceneCameraPreset(
+export function resolveDefaultSceneCameraPreset(
   presetKey: string | null | undefined,
 ): EngineCameraPresetPose | null {
   if (!presetKey) {
     return null
   }
 
-  const preset = CAMERA_PRESETS[presetKey as CameraPresetKey]
+  const preset = CAMERA_PRESET_DEFAULTS[presetKey as CameraPresetKey]
   if (!preset) {
     return null
   }
 
   return clonePresetPose(preset)
+}
+
+export function resolveSceneCameraPreset(
+  presetKey: string | null | undefined,
+): EngineCameraPresetPose | null {
+  const preset = resolveDefaultSceneCameraPreset(presetKey)
+  if (!preset || !presetKey || !isCameraPresetKey(presetKey)) {
+    return null
+  }
+
+  return mergeSceneCameraPresetPose(presetKey, preset)
 }
