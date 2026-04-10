@@ -20,12 +20,9 @@ interface PackIndex {
 }
 
 let loaded: PackIndex | null = null
+let loadingPromise: Promise<PackIndex> | null = null
 
-/**
- * 从 /packs/index.json 加载资源包目录。
- * 必须在应用挂载前调用且仅调用一次。
- */
-export async function loadResourcePackCatalog(): Promise<void> {
+async function requestResourcePackCatalog(): Promise<PackIndex> {
   const response = await fetch('/packs/index.json')
   if (!response.ok) {
     throw new Error(`Failed to load resource pack index: ${response.status}`)
@@ -34,7 +31,37 @@ export async function loadResourcePackCatalog(): Promise<void> {
   if (!data.packs?.length) {
     throw new Error('Resource pack index contains no packs')
   }
-  loaded = data
+  return data
+}
+
+/**
+ * 从 /packs/index.json 加载资源包目录。
+ * 该调用是幂等的，可用于后台预取，也可在引擎真正启动前等待完成。
+ */
+export async function loadResourcePackCatalog(): Promise<void> {
+  if (loaded) {
+    return
+  }
+
+  if (!loadingPromise) {
+    loadingPromise = requestResourcePackCatalog()
+      .then(data => {
+        loaded = data
+        return data
+      })
+      .catch(error => {
+        loadingPromise = null
+        throw error
+      })
+  }
+
+  await loadingPromise
+}
+
+export function preloadResourcePackCatalog() {
+  void loadResourcePackCatalog().catch(error => {
+    console.warn('[App] Resource pack catalog preload failed', error)
+  })
 }
 
 export function getResourcePackCatalog(): PackIndex {

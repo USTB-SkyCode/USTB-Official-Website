@@ -11,7 +11,7 @@ type AppBootstrapState = {
 const state = reactive<AppBootstrapState>({
   phase: 'loading',
   title: '正在准备前端运行时',
-  message: '正在加载资源包目录和基础运行配置。',
+  message: '正在初始化基础运行配置与界面状态。',
 })
 
 function normalizeErrorMessage(error: unknown): string {

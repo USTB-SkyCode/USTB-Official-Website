@@ -27,7 +27,6 @@ import type { Player } from '@/engine/world/entity/character/Player'
 import type { FirstPersonHand } from '@/engine/world/entity/character/firstPerson/FirstPersonHand'
 import { CHARACTER_LOCAL_HEIGHT } from '@/engine/world/entity/character/Character'
 import { DayNightCycle } from '@/engine/world/game/DayNightCycle'
-import type { DayNightCycleMode } from '@/engine/world/game/DayNightCycle'
 import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
 import {
   getCharacterBodyGroupId,

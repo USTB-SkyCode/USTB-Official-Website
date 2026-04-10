@@ -159,6 +159,13 @@ export class Renderer {
   public iblIntensity: number = 0.3
   private backendFrameId = 1
 
+  /**
+   * 随机云层覆盖率, 每次创建 Renderer 时随机生成。
+   * 权重: 晴天薄云 0.30, 少云 0.30, 多云 0.30, 阴天 0.10。
+   * 数值本身也刻意拉开，避免视觉上塌成只有“厚云/稍薄”两档。
+   */
+  public cloudCover: number
+
   public getLastFrameDrawCallStats(): DrawCallStatsSnapshot {
     return drawCallStats.getLastFrameStats()
   }
@@ -361,6 +368,19 @@ export class Renderer {
     // Scene: sunDir(16) + sunColor(16) + ambSky(16) + ambGnd(16) + params(16) + lightMatrices(256) + splits(16) = 352 bytes
     this.sceneUBO = new UniformBuffer(gl, 352, 1)
     this.frameUniforms = new FrameUniforms(gl)
+
+    // 随机云层覆盖率: 晴天薄云 30%, 少云 30%, 多云 30%, 阴天 10%
+    // 这里不再等概率抽档，否则厚云会明显过多。
+    const cloudRoll = Math.random()
+    if (cloudRoll < 0.3) {
+      this.cloudCover = 0.08
+    } else if (cloudRoll < 0.6) {
+      this.cloudCover = 0.2
+    } else if (cloudRoll < 0.9) {
+      this.cloudCover = 0.42
+    } else {
+      this.cloudCover = 0.65
+    }
 
     // 初始化合成 FBO，用于存储最终渲染结果，并与 G-Buffer 共享深度缓冲。
     this.compositionFrameBuffer = new FrameBuffer(gl, width, height)
@@ -704,6 +724,7 @@ export class Renderer {
       this.isMobile ? 1 : 0,
       this.isMobile && !!this.gBuffer.linearDepth,
       lightingCfg.POINT_SHADOW_BIAS,
+      this.cloudCover,
     )
 
     // =========================================================================
@@ -971,6 +992,7 @@ export class Renderer {
     depthFilterMode: number,
     useLinearDepth: boolean,
     pointShadowBias: number,
+    cloudCover: number,
   ) {
     this.frameUniforms.update({
       fogStart,
@@ -990,6 +1012,7 @@ export class Renderer {
       useVertexLighting,
       pointShadowBias,
       useWboit: this.forwardPass.isWBOITSupported,
+      cloudCover,
     })
   }
 

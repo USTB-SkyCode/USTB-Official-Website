@@ -74,6 +74,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const {
   pageFrameMode,
+  displayModePreference,
   takeoverEnabled,
   takeoverBlockedReason,
   hostRuntimeReady,
@@ -98,7 +99,9 @@ const {
 provideFrameMode(pageFrameMode)
 const showLoginLoading = computed(() => isPopupCallback.value)
 const showLoginPortal = computed(
-  () => !isPopupCallback.value && (mobileDevice.value || !takeoverEnabled.value),
+  () =>
+    !isPopupCallback.value &&
+    (mobileDevice.value || displayModePreference.value === 'dom' || !takeoverEnabled.value),
 )
 const loadingKicker = computed(() => (isPopupCallback.value ? 'OAuth Callback' : 'Scene Loading'))
 const loadingTitle = computed(() =>
@@ -112,7 +115,7 @@ const loadingCopy = computed(() => {
   if (!takeoverEnabled.value) {
     return takeoverBlockedReason.value
       ? `引擎接管已回退：${takeoverBlockedReason.value}`
-      : '引擎接管不可用，当前使用原生 DOM 登录。'
+      : '当前默认使用原生 DOM 登录，可在校园游览中按需启动 3D 引擎。'
   }
 
   if (mobileDevice.value) {
@@ -340,7 +343,7 @@ onBeforeUnmount(() => {
   z-index: 3;
   padding: 48px 28px;
   text-align: center;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(14px);
   pointer-events: auto;
 }
 
@@ -350,8 +353,8 @@ onBeforeUnmount(() => {
   gap: 10px;
   width: min(460px, calc(100vw - 40px));
   padding: 28px 30px;
-  border: 1px solid rgb(166 201 255 / 18%);
-  background: rgb(7 12 22 / 54%);
+  border-radius: 20px;
+  background: color-mix(in srgb, rgb(7 12 22 / 54%) 90%, transparent);
   box-shadow: 0 26px 80px rgb(0 0 0 / 26%);
   color: rgb(236 244 255 / 92%);
   text-align: left;
@@ -442,17 +445,13 @@ onBeforeUnmount(() => {
   gap: 14px;
   width: min(420px, calc(100vw - 32px));
   padding: 24px;
-  border: 1px solid
-    color-mix(in srgb, var(--el-border-color, rgb(148 163 184 / 38%)) 72%, transparent);
   border-radius: 24px;
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--el-bg-color-overlay, #fff) 92%, rgb(90 142 255 / 10%)) 0%,
     color-mix(in srgb, var(--el-bg-color-overlay, #fff) 97%, transparent) 100%
   );
-  box-shadow:
-    0 24px 80px rgb(15 23 42 / 20%),
-    inset 0 1px 0 rgb(255 255 255 / 40%);
+  box-shadow: 0 24px 80px rgb(15 23 42 / 20%);
   color: var(--el-text-color-primary, #111827);
   text-align: left;
 }

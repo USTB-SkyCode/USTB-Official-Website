@@ -6,6 +6,7 @@
 import { markRaw, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import type { Component } from 'vue'
 import { useSceneController } from '@/composables/scene/useSceneController'
+import { loadResourcePackCatalog } from '@/resource/catalog'
 import { getEngineTakeoverPolicy } from '@/utils/engineTakeoverPolicy'
 
 const resolvedHostComponent = shallowRef<Component | null>(null)
@@ -91,6 +92,18 @@ onMounted(async () => {
   await waitForIdleWindow(engineTakeoverPolicy.loadTimeoutMs)
 
   if (!alive) {
+    return
+  }
+
+  try {
+    await loadResourcePackCatalog()
+  } catch (error) {
+    if (!alive) {
+      return
+    }
+
+    fallbackToDom('[App] Failed to load resource pack catalog before engine boot')
+    console.error('[App] Failed to load resource pack catalog before engine boot', error)
     return
   }
 

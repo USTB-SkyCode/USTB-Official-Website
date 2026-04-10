@@ -8,6 +8,8 @@ import { isLikelyMobileDevice } from '@/utils/platformCapabilities'
 const STORAGE_KEY = 'world-engine-persistence'
 const MOBILE_DEFAULT_LOAD_DISTANCE = 8
 
+export type PersistedDisplayMode = 'dom' | 'engine'
+
 type PersistedHomeExplorePose = {
   position: [number, number, number]
   lookTarget: [number, number, number]
@@ -17,6 +19,12 @@ type PersistedHomeExplorePose = {
 type PersistedEngineState = {
   runtimeConfig: EngineRuntimeMutableConfig
   homeExplorePose: PersistedHomeExplorePose | null
+  displayModePreference: PersistedDisplayMode
+  hasRememberedDisplayMode?: boolean
+}
+
+function sanitizeDisplayModePreference(value: unknown): PersistedDisplayMode {
+  return value === 'engine' ? 'engine' : 'dom'
 }
 
 function isPerspectiveMode(value: unknown): value is PlayerPerspectiveMode {
@@ -137,6 +145,8 @@ function readPersistedState(): PersistedEngineState {
   const fallback: PersistedEngineState = {
     runtimeConfig: getDefaultRuntimeConfig(),
     homeExplorePose: null,
+    displayModePreference: 'dom',
+    hasRememberedDisplayMode: false,
   }
 
   if (typeof window === 'undefined') {
@@ -153,6 +163,8 @@ function readPersistedState(): PersistedEngineState {
     return {
       runtimeConfig: sanitizeRuntimeConfig(parsed.runtimeConfig),
       homeExplorePose: sanitizeHomeExplorePose(parsed.homeExplorePose),
+      displayModePreference: sanitizeDisplayModePreference(parsed.displayModePreference),
+      hasRememberedDisplayMode: !!parsed.hasRememberedDisplayMode,
     }
   } catch (error) {
     console.warn('Engine persistence store: failed to read persisted state', error)
@@ -164,6 +176,8 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
   const persisted = readPersistedState()
   const runtimeConfig = ref<EngineRuntimeMutableConfig>(persisted.runtimeConfig)
   const homeExplorePose = ref<PersistedHomeExplorePose | null>(persisted.homeExplorePose)
+  const displayModePreference = ref<PersistedDisplayMode>(persisted.displayModePreference)
+  const hasRememberedDisplayMode = ref<boolean>(persisted.hasRememberedDisplayMode ?? false)
 
   function persistState() {
     if (typeof window === 'undefined') {
@@ -176,6 +190,10 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
         JSON.stringify({
           runtimeConfig: runtimeConfig.value,
           homeExplorePose: homeExplorePose.value,
+          displayModePreference: hasRememberedDisplayMode.value
+            ? displayModePreference.value
+            : 'dom',
+          hasRememberedDisplayMode: hasRememberedDisplayMode.value,
         } satisfies PersistedEngineState),
       )
     } catch (error) {
@@ -195,15 +213,35 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
     homeExplorePose.value = null
   }
 
+  function setDisplayModePreference(mode: PersistedDisplayMode, rememberChoice: boolean = false) {
+    displayModePreference.value = sanitizeDisplayModePreference(mode)
+    hasRememberedDisplayMode.value = rememberChoice
+  }
+
+  function setHasRememberedDisplayMode(value: boolean) {
+    hasRememberedDisplayMode.value = value
+  }
+
   if (typeof window !== 'undefined') {
-    watch([runtimeConfig, homeExplorePose], persistState, { deep: true, immediate: true })
+    watch(
+      [runtimeConfig, homeExplorePose, displayModePreference, hasRememberedDisplayMode],
+      persistState,
+      {
+        deep: true,
+        immediate: true,
+      },
+    )
   }
 
   return {
     runtimeConfig: computed(() => runtimeConfig.value),
     homeExplorePose: computed(() => homeExplorePose.value),
+    displayModePreference: computed(() => displayModePreference.value),
+    hasRememberedDisplayMode: computed(() => hasRememberedDisplayMode.value),
     setRuntimeConfig,
     setHomeExplorePose,
     clearHomeExplorePose,
+    setDisplayModePreference,
+    setHasRememberedDisplayMode,
   }
 })

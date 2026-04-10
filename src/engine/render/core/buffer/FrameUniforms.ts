@@ -36,6 +36,7 @@ export interface FrameUniformValues {
   useVertexLighting: boolean
   pointShadowBias: number
   useWboit: boolean
+  cloudCover: number
 }
 
 export class FrameUniforms {
@@ -78,7 +79,7 @@ export class FrameUniforms {
     this.buffer.writeVec4(FRAME_UNIFORM_OFFSETS.renderParams2, [
       values.pointShadowBias,
       values.useWboit ? 1 : 0,
-      0,
+      values.cloudCover,
       0,
     ])
     this.buffer.flush()

@@ -454,14 +454,19 @@ onBeforeUnmount(() => {
 
 .placeholder-tag {
   display: inline-flex;
+  flex-shrink: 0;
+  max-width: 100%;
   margin-bottom: 12px;
   padding: 5px 10px;
+  overflow: hidden;
   border: 1px solid var(--theme-border-strong);
   border-radius: 999px;
   background: var(--theme-accent-soft);
   color: var(--theme-accent);
-  font-size: 11px;
+  font-size: clamp(9px, 0.7rem + 0.5vw, 11px);
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hero-actions {

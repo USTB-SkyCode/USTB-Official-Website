@@ -5,7 +5,7 @@ export function createSceneRuntimeState() {
   const engineTimeManualOverrideActive = ref(false)
   const engineFixedTimeHours = ref(20)
   const engineRealtimeOffsetHours = ref(0)
-  const takeoverEnabled = ref(true)
+  const takeoverEnabled = ref(false)
   const takeoverBlockedReason = ref<string | null>(null)
   const hostRuntimeReady = ref(false)
   const cameraSettled = ref(false)

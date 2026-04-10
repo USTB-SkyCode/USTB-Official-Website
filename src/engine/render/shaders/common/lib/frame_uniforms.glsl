@@ -79,3 +79,7 @@ float framePointShadowBias() {
 bool frameUseWboit() {
     return uFrameRenderParams2.y > 0.5;
 }
+
+float frameCloudCover() {
+    return uFrameRenderParams2.z;
+}

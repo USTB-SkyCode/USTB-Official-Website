@@ -100,6 +100,7 @@ export class ForwardPass {
         const reverseZ = context?.useReverseZ === true
         stateGl.enable(stateGl.DEPTH_TEST)
         stateGl.depthFunc(reverseZ ? stateGl.GEQUAL : stateGl.LEQUAL)
+        stateGl.enable(stateGl.CULL_FACE)
         stateGl.enable(stateGl.BLEND)
 
         if (this.isWBOITSupported) {
@@ -210,6 +211,13 @@ export class ForwardPass {
             return false
           }
 
+          if (object.material.doubleSided) {
+            gl.disable(gl.CULL_FACE)
+          } else {
+            gl.enable(gl.CULL_FACE)
+            gl.cullFace(gl.BACK)
+          }
+
           const colorConstant = object.material.constants?.color
           applyForwardMaterialUniforms(gl, uniforms, {
             modelMatrix: object.transform,
@@ -263,6 +271,7 @@ export class ForwardPass {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.depthMask(false)
     gl.disable(gl.DEPTH_TEST) // Fullscreen quad doesn't need depth test
+    gl.disable(gl.CULL_FACE)
 
     gl.useProgram(this.wboitProgram)
 

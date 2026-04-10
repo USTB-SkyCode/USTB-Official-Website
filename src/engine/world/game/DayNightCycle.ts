@@ -154,7 +154,11 @@ export class DayNightCycle {
       // 日出。
       const t = this.timeProgress / 0.1
       sunColorArr = this.lerpColor([0.1, 0.1, 0.2], [1.0, 0.6, 0.3], t) as [number, number, number]
-      fogColorArr = this.lerpColor([0.05, 0.05, 0.1], [0.6, 0.4, 0.3], t) as [number, number, number]
+      fogColorArr = this.lerpColor([0.05, 0.05, 0.1], [0.6, 0.4, 0.3], t) as [
+        number,
+        number,
+        number,
+      ]
     } else if (this.timeProgress < 0.2) {
       // 清晨。
       const t = (this.timeProgress - 0.1) / 0.1

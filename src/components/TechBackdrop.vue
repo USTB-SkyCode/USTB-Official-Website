@@ -365,14 +365,18 @@ function spawnMeteor(delayMs = 0) {
     return
   }
 
+  const isMobile = width <= 768
+
   const launchZoneRight = Math.min(Math.max(width * 0.18, 140), 260)
   const launchZoneTop = HEADER_BAR_HEIGHT + 6
   const launchZoneBottom = Math.min(height * 0.17, HEADER_BAR_HEIGHT + HERO_TITLE_BAND_HEIGHT - 12)
   const startX = randomBetween(18, launchZoneRight)
   const startY = randomBetween(launchZoneTop, Math.max(launchZoneTop + 16, launchZoneBottom))
-  const targetY = randomBetween(height * 0.12, Math.max(height * 0.16, height * 0.3))
+
+  const verticalDrop = isMobile ? randomBetween(140, 240) : randomBetween(220, 360)
+  const targetY = startY + verticalDrop
   const travelX = width - startX + randomBetween(80, 180)
-  const travelY = targetY - startY + randomBetween(120, 220)
+  const travelY = targetY - startY
   const angle = (Math.atan2(travelY, travelX) * 180) / Math.PI
 
   const meteor: Meteor = {
@@ -689,13 +693,17 @@ onBeforeUnmount(() => {
     ),
     repeating-linear-gradient(
       90deg,
-      color-mix(in srgb, var(--theme-accent) 5%, transparent) 0 1px,
-      transparent 1px var(--tech-grid-step)
+      color-mix(in srgb, var(--theme-accent) 5%, transparent) 0px,
+      color-mix(in srgb, var(--theme-accent) 5%, transparent) 1px,
+      transparent 1px,
+      transparent var(--tech-grid-step)
     ),
     repeating-linear-gradient(
       180deg,
-      color-mix(in srgb, var(--theme-accent) 4%, transparent) 0 1px,
-      transparent 1px var(--tech-grid-step)
+      color-mix(in srgb, var(--theme-accent) 4%, transparent) 0px,
+      color-mix(in srgb, var(--theme-accent) 4%, transparent) 1px,
+      transparent 1px,
+      transparent var(--tech-grid-step)
     );
   pointer-events: none;
   inset: 0;
@@ -709,17 +717,20 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(
       circle at 18% 30%,
-      color-mix(in srgb, var(--theme-accent) 14%, transparent) 0 2px,
+      color-mix(in srgb, var(--theme-accent) 14%, transparent) 0px,
+      color-mix(in srgb, var(--theme-accent) 14%, transparent) 2px,
       transparent 3px
     ),
     radial-gradient(
       circle at 72% 24%,
-      color-mix(in srgb, var(--theme-accent) 11%, transparent) 0 1.5px,
+      color-mix(in srgb, var(--theme-accent) 11%, transparent) 0px,
+      color-mix(in srgb, var(--theme-accent) 11%, transparent) 1.5px,
       transparent 2.5px
     ),
     radial-gradient(
       circle at 64% 68%,
-      color-mix(in srgb, var(--theme-accent) 9%, transparent) 0 2px,
+      color-mix(in srgb, var(--theme-accent) 9%, transparent) 0px,
+      color-mix(in srgb, var(--theme-accent) 9%, transparent) 2px,
       transparent 3px
     ),
     repeating-linear-gradient(
@@ -749,28 +760,39 @@ onBeforeUnmount(() => {
 
 :global(html:not(.dark)) .tech-bg {
   background:
+    radial-gradient(circle at 14% 18%, rgba(11, 101, 255, 0.15), transparent 28%),
+    radial-gradient(circle at 82% 12%, rgba(11, 101, 255, 0.1), transparent 22%),
     radial-gradient(
-      circle at 14% 18%,
-      color-mix(in srgb, var(--theme-accent) 16%, transparent),
-      transparent 28%
+      circle at 18% 30%,
+      rgba(63, 134, 255, 0.15) 0px,
+      rgba(63, 134, 255, 0.15) 2px,
+      transparent 3px
     ),
     radial-gradient(
-      circle at 82% 12%,
-      color-mix(in srgb, var(--theme-accent) 12%, transparent),
-      transparent 22%
+      circle at 72% 24%,
+      rgba(63, 134, 255, 0.12) 0px,
+      rgba(63, 134, 255, 0.12) 1.5px,
+      transparent 2.5px
     ),
-    radial-gradient(circle at 18% 30%, rgb(63 134 255 / 15%) 0 2px, transparent 3px),
-    radial-gradient(circle at 72% 24%, rgb(63 134 255 / 12%) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 64% 68%, rgb(63 134 255 / 10%) 0 2px, transparent 3px),
+    radial-gradient(
+      circle at 64% 68%,
+      rgba(63, 134, 255, 0.1) 0px,
+      rgba(63, 134, 255, 0.1) 2px,
+      transparent 3px
+    ),
     repeating-linear-gradient(
       90deg,
-      rgb(63 134 255 / 14%) 0 1px,
-      transparent 1px var(--tech-grid-step)
+      rgba(0, 50, 150, 0.45) 0px,
+      rgba(0, 50, 150, 0.45) 3px,
+      transparent 3px,
+      transparent var(--tech-grid-step)
     ),
     repeating-linear-gradient(
       180deg,
-      rgb(63 134 255 / 10%) 0 1px,
-      transparent 1px var(--tech-grid-step)
+      rgba(0, 50, 150, 0.4) 0px,
+      rgba(0, 50, 150, 0.4) 3px,
+      transparent 3px,
+      transparent var(--tech-grid-step)
     ),
     var(--theme-page-bg);
 }

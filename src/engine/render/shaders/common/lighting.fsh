@@ -253,12 +253,11 @@ void main() {
         vec3 V = reconstructSkyWorldDirection(vUV, uView, uProjection);
         vec3 L = normalize(-uSunDirection.xyz);
 
-        // 1. 大气背景
-        vec3 skyColor = getSimpleAtmosphere(V, L);
+        // 1. 大气背景 (含高度感知)
+        vec3 skyColor = getSimpleAtmosphere(V, L, uViewPos.y);
 
-        // 2. 云层叠加
-        // TODO: 从 Uniform 获取云量，目前硬编码 0.5
-        vec4 cloudData = getClouds(V, L, uTime * 0.05, 0.5);
+        // 2. 云层叠加 (射线-平面求交, 世界锚定)
+        vec4 cloudData = getClouds(V, L, uTime * 0.05, frameCloudCover(), uViewPos.xyz);
         skyColor = mix(skyColor, cloudData.rgb, cloudData.a);
 
         fragColor = vec4(skyColor, 1.0);

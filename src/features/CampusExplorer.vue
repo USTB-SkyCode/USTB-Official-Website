@@ -25,12 +25,6 @@
       <div class="campus-explorer__panel" data-explore-ui-control="true">
         <p class="campus-explorer__eyebrow">Campus Explorer</p>
         <h2 class="campus-explorer__title">校园游览</h2>
-        <p class="campus-explorer__copy">
-          <span>桌面端可点击画面或按键进入操作；移动端可直接触摸左半屏移动、右半屏转向。</span>
-          <span>按住 Alt 临时唤起界面，按 X 打开引擎设置，Esc 退出操作态。</span>
-          <span>切换 128 材质包或修改需要重载的引擎设置时，左上角会显示当前重载状态。</span>
-          <span v-if="takeoverStatusMessage">{{ takeoverStatusMessage }}</span>
-        </p>
 
         <div class="campus-explorer__actions">
           <button
@@ -52,32 +46,59 @@
           </button>
         </div>
 
-        <!-- <div class="campus-explorer__status">
-          <span class="campus-explorer__badge">{{ isEngaged ? 'Interactive' : 'Browse' }}</span>
-          <span class="campus-explorer__badge">共享 Persistent Engine</span>
-        </div> -->
+        <div class="campus-explorer__accordions">
+          <div class="campus-accordion" :class="{ 'is-open': activeAccordion === 'desktop' }">
+            <button
+              class="campus-accordion__header"
+              type="button"
+              @click="toggleAccordion('desktop')"
+            >
+              <span>桌面端操作说明</span>
+              <span class="campus-accordion__icon"></span>
+            </button>
+            <div v-show="activeAccordion === 'desktop'" class="campus-accordion__content">
+              <ul class="campus-explorer__tips">
+                <li>W A S D 移动</li>
+                <li>鼠标转动视角</li>
+                <li>Space / Shift 升降</li>
+                <li>中键选择方块</li>
+                <li>右键放置方块</li>
+                <li>左键破坏方块</li>
+                <li>5 切换人称</li>
+                <li>Alt 唤起顶栏</li>
+                <li>X 打开引擎设置</li>
+                <li>Esc 退出操作态</li>
+              </ul>
+            </div>
+          </div>
 
-        <ul class="campus-explorer__tips">
-          <li>桌面端：W A S D 移动</li>
-          <li>桌面端：鼠标观察</li>
-          <li>桌面端：Space / Shift 升降</li>
-          <li>移动端：左半屏拖动移动</li>
-          <li>移动端：右半屏拖动转向</li>
-          <li>移动端：右半屏单点放置方块</li>
-          <li>移动端：右半屏长按 0.3 秒破坏</li>
-          <li>移动端：左上按钮可选取方块</li>
-          <li>5 切换人称</li>
-          <li>按住 Alt 临时唤起顶栏</li>
-          <li>X 打开引擎设置</li>
-          <li>Esc 退出操作态</li>
-        </ul>
+          <div class="campus-accordion" :class="{ 'is-open': activeAccordion === 'mobile' }">
+            <button
+              class="campus-accordion__header"
+              type="button"
+              @click="toggleAccordion('mobile')"
+            >
+              <span>移动端操作说明</span>
+              <span class="campus-accordion__icon"></span>
+            </button>
+            <div v-show="activeAccordion === 'mobile'" class="campus-accordion__content">
+              <ul class="campus-explorer__tips">
+                <li>左半屏拖动 移动</li>
+                <li>右半屏拖动 转向视角</li>
+                <li>右半屏单点 放置方块</li>
+                <li>右半屏长按0.3s 破坏</li>
+                <li>左上按钮可选取方块</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useSceneController } from '@/composables/scene/useSceneController'
 
 const {
@@ -85,7 +106,6 @@ const {
   homeExploreEngineSettingsOpen,
   homeExploreUiReveal,
   takeoverEnabled,
-  takeoverBlockedReason,
   hostRuntimeReady,
   requestHomeExploreMobileBlockAction,
   setHomeExploreEngineSettingsOpen,
@@ -97,19 +117,12 @@ const isEngaged = computed(() => homeExploreInteractionActive.value)
 const isUiRevealVisible = computed(() => homeExploreUiReveal.value)
 const isEngineSettingsOpen = computed(() => homeExploreEngineSettingsOpen.value)
 const canEnterInteraction = computed(() => takeoverEnabled.value && hostRuntimeReady.value)
-const takeoverStatusMessage = computed(() => {
-  if (!takeoverEnabled.value) {
-    return takeoverBlockedReason.value
-      ? `当前设备已回退为 DOM 模式：${takeoverBlockedReason.value}`
-      : '当前设备已回退为 DOM 模式。'
-  }
 
-  if (!hostRuntimeReady.value) {
-    return '引擎仍在启动，完成后才可进入操作态。'
-  }
+const activeAccordion = ref<'desktop' | 'mobile' | null>(null)
+function toggleAccordion(panel: 'desktop' | 'mobile') {
+  activeAccordion.value = activeAccordion.value === panel ? null : panel
+}
 
-  return ''
-})
 const shouldShowHud = computed(
   () => !isEngaged.value || isUiRevealVisible.value || isEngineSettingsOpen.value,
 )
@@ -255,28 +268,89 @@ function pickTargetBlock() {
   opacity: 0.58;
 }
 
-.campus-explorer__status {
-  display: flex;
-  flex-wrap: wrap;
+.campus-explorer__accordions {
+  display: grid;
   gap: 8px;
   margin-top: 16px;
 }
 
-.campus-explorer__badge {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--theme-accent-soft) 36%, transparent);
+.campus-accordion {
+  background: color-mix(in srgb, var(--theme-card-bg) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 40%, transparent);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background 200ms ease;
+}
+
+.campus-accordion.is-open {
+  background: color-mix(in srgb, var(--theme-card-bg) 80%, transparent);
+  border-color: color-mix(in srgb, var(--theme-border-strong) 80%, transparent);
+}
+
+.campus-accordion__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
   color: inherit;
-  font-size: 0.82rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.campus-accordion__header:hover {
+  background: color-mix(in srgb, var(--theme-accent-soft) 20%, transparent);
+}
+
+.campus-accordion__icon {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  transition: transform 200ms ease;
+}
+
+.campus-accordion__icon::before,
+.campus-accordion__icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 2px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+  border-radius: 2px;
+}
+
+.campus-accordion__icon::after {
+  width: 2px;
+  height: 10px;
+}
+
+.campus-accordion.is-open .campus-accordion__icon {
+  transform: rotate(180deg);
+}
+
+.campus-accordion.is-open .campus-accordion__icon::after {
+  opacity: 0;
+}
+
+.campus-accordion__content {
+  padding: 0 14px 14px;
 }
 
 .campus-explorer__tips {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 14px;
-  margin: 18px 0 0;
+  margin: 0;
   padding-left: 18px;
-  color: inherit;
+  color: color-mix(in srgb, inherit 80%, transparent);
+  font-size: 0.85rem;
 }
 
 :global(html:not(.dark)) .campus-explorer__panel {
@@ -295,16 +369,20 @@ function pickTargetBlock() {
 
 @media (width <= 720px) {
   .campus-explorer__hud {
-    top: auto;
-    right: 16px;
-    bottom: 16px;
-    left: 16px;
+    top: var(--header-height, 64px);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    padding: 16px;
+    align-items: flex-start;
   }
 
   .campus-explorer__panel {
-    width: auto;
+    width: 100%;
+    margin: 0;
     padding: 16px 18px;
     border-radius: 20px;
+    box-sizing: border-box;
   }
 
   .campus-explorer__tips {

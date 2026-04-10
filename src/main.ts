@@ -15,7 +15,7 @@ import { useSceneControllerStore } from './stores/sceneController'
 import { useUserStore } from './stores/user'
 import { installGlobalErrorReporter } from './utils/errorReporter'
 import { getEngineTakeoverPolicy } from './utils/engineTakeoverPolicy'
-import { loadResourcePackCatalog } from './resource/catalog'
+import { preloadResourcePackCatalog } from './resource/catalog'
 
 async function bootstrap() {
   const app = createApp(App)
@@ -32,8 +32,6 @@ async function bootstrap() {
   app.mount('#app')
 
   try {
-    await loadResourcePackCatalog()
-
     const enginePersistenceStore = useEnginePersistenceStore(pinia)
     applyEngineRuntimeConfigPatch(enginePersistenceStore.runtimeConfig)
     subscribeEngineRuntimeConfig(nextConfig => {
@@ -42,14 +40,21 @@ async function bootstrap() {
 
     const sceneControllerStore = useSceneControllerStore(pinia)
     const engineTakeoverPolicy = getEngineTakeoverPolicy()
-    sceneControllerStore.setTakeoverEnabled(engineTakeoverPolicy.supported)
-    sceneControllerStore.setTakeoverBlockedReason(engineTakeoverPolicy.reason)
+    sceneControllerStore.setTakeoverEnabled(
+      engineTakeoverPolicy.supported && enginePersistenceStore.displayModePreference === 'engine',
+    )
+    sceneControllerStore.setTakeoverBlockedReason(
+      engineTakeoverPolicy.supported
+        ? null
+        : (engineTakeoverPolicy.reason ?? '当前环境不支持 3D 引擎'),
+    )
+
+    markAppBootstrapReady()
+    preloadResourcePackCatalog()
 
     // 初始化用户数据
     const userStore = useUserStore(pinia)
     void userStore.fetchUser({ preserveGuest: true })
-
-    markAppBootstrapReady()
   } catch (error) {
     console.error('[App] bootstrap failed', error)
     reportAppBootstrapError(error, '前端启动失败')

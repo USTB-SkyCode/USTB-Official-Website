@@ -324,6 +324,13 @@ export class ShadowPass {
             if (!object.castShadow) {
               return false
             }
+
+            if (object.material.doubleSided) {
+              gl.disable(gl.CULL_FACE)
+            } else {
+              gl.enable(gl.CULL_FACE)
+            }
+
             if (transparentUniforms.uModel)
               gl.uniformMatrix4fv(transparentUniforms.uModel, false, object.transform)
           },

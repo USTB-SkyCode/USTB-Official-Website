@@ -25,6 +25,8 @@ export function usePersistentEngineHostController() {
     visualMode,
     shouldReservePersistentHost,
     pageFrameMode,
+    shouldShowEngineCanvas,
+    takeoverEnabled,
     cameraPresetKey,
     homeActiveTab,
     homeExploreInteractionActive,
@@ -212,7 +214,9 @@ export function usePersistentEngineHostController() {
   const activeResourceLabel = computed(() => resourceStore.activeResource.label)
   const hostCanvasVisible = computed(
     () =>
+      takeoverEnabled.value &&
       shouldReservePersistentHost.value &&
+      shouldShowEngineCanvas.value &&
       (engineStatus.value === 'ready' || engineStatus.value === 'booting'),
   )
   const showBootOverlay = computed(

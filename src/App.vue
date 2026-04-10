@@ -1,7 +1,10 @@
 <template>
   <GlobalErrorDialog />
 
-  <section v-if="bootstrapState.phase === 'error'" class="app-bootstrap-state app-bootstrap-state--error">
+  <section
+    v-if="bootstrapState.phase === 'error'"
+    class="app-bootstrap-state app-bootstrap-state--error"
+  >
     <p class="app-bootstrap-state__kicker">Bootstrap Error</p>
     <strong>{{ bootstrapState.title }}</strong>
     <span>{{ bootstrapState.message }}</span>

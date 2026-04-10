@@ -297,10 +297,10 @@ void main() {
     // 基于程序天空的简化 IBL 近似。
     vec3 R = reflect(-V, N);
 
-    vec3 skyReflectColor = getSimpleAtmosphere(R, normalize(-uSunDirection.xyz));
+    vec3 skyReflectColor = getSimpleAtmosphere(R, normalize(-uSunDirection.xyz), uViewPos.y);
 
     // 叠加少量云层反射，补一点高频细节。
-    vec4 cloudRef = getClouds(R, normalize(-uSunDirection.xyz), uTime * 0.05, 0.5);
+    vec4 cloudRef = getClouds(R, normalize(-uSunDirection.xyz), uTime * 0.05, frameCloudCover(), uViewPos.xyz);
     skyReflectColor = mix(skyReflectColor, cloudRef.rgb, cloudRef.a * 0.5);
 
     // 地面反射退化为环境地面色。

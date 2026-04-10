@@ -14,13 +14,15 @@ export default defineComponent({
   },
   setup(props, { slots }) {
     const { shouldReservePersistentHost } = useRouteVisualPlan()
-    const { takeoverEnabled } = useSceneController()
+    const { takeoverEnabled, displayModePreference } = useSceneController()
 
     return () => {
       const content = slots.default?.() ?? []
       if (
         props.frameMode === 'engine' ||
-        (takeoverEnabled.value && shouldReservePersistentHost.value)
+        (takeoverEnabled.value &&
+          displayModePreference.value === 'engine' &&
+          shouldReservePersistentHost.value)
       ) {
         return content
       }
