@@ -11,7 +11,7 @@ param(
 . (Join-Path $PSScriptRoot '..\Resolve-RemoteScriptConfig.ps1')
 
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
-$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'world-dev'
+$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'user@example.com'
 $remoteRoot = Resolve-RemoteSetting -Value $RemoteRoot -EnvName 'WORLD_VSCODE_MONITOR_ROOT' -Default '~/.local/share/world-vscode-monitor'
 $localMonitor = Join-Path $projectRoot 'scripts\dev\remote\vscode_resource_monitor.py'
 $remoteMonitor = "$remoteRoot/vscode_resource_monitor.py"

@@ -1,5 +1,58 @@
 import { extractChunkData } from './RegionParser'
 
+async function readFetchErrorSummary(response: Response): Promise<string> {
+  try {
+    const raw = (await response.text()).trim()
+    if (!raw) {
+      return ''
+    }
+
+    return raw.length > 240 ? `${raw.slice(0, 240)}...` : raw
+  } catch {
+    return ''
+  }
+}
+
+function withCacheBust(url: string): string {
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://dev-app.example.test'
+  const resolved = new URL(url, base)
+  resolved.searchParams.set('mca_retry', Date.now().toString())
+  return resolved.pathname + resolved.search
+}
+
+async function fetchRegionBuffer(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url)
+  if (response.status === 404) {
+    return new ArrayBuffer(0)
+  }
+
+  if (response.ok) {
+    return response.arrayBuffer()
+  }
+
+  if (response.status === 400) {
+    const retryUrl = withCacheBust(url)
+    const retryResponse = await fetch(retryUrl, { cache: 'no-store' })
+    if (retryResponse.status === 404) {
+      return new ArrayBuffer(0)
+    }
+    if (retryResponse.ok) {
+      console.warn(`[RegionManager] Retried ${url} as ${retryUrl} after 400 and recovered`)
+      return retryResponse.arrayBuffer()
+    }
+
+    const retrySummary = await readFetchErrorSummary(retryResponse)
+    const retryDetails = retrySummary ? ` - ${retrySummary}` : ''
+    throw new Error(
+      `Region fetch failed for ${url}: ${retryResponse.status} ${retryResponse.statusText} after retry ${retryUrl}${retryDetails}`,
+    )
+  }
+
+  const errorSummary = await readFetchErrorSummary(response)
+  const errorDetails = errorSummary ? ` - ${errorSummary}` : ''
+  throw new Error(`Region fetch failed for ${url}: ${response.status} ${response.statusText}${errorDetails}`)
+}
+
 /**
  * @file RegionManager.ts
  * @brief 世界存档 Region 管理器
@@ -56,11 +109,7 @@ export class RegionManager {
           throw new Error('RegionManager requires an explicit world source before loading chunks')
         }
         // 发起 Region 文件加载。
-        promise = fetch(url).then(res => {
-          if (res.status === 404) return new ArrayBuffer(0) // 区域文件不存在
-          if (!res.ok) throw new Error(`Region fetch failed: ${res.statusText}`)
-          return res.arrayBuffer()
-        })
+        promise = fetchRegionBuffer(url)
         this.inflight.set(key, promise)
       }
 

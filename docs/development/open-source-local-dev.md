@@ -290,8 +290,8 @@ npm run dev
 - `LOCAL_APP_DEV_DOMAIN`
   - 填浏览器主入口域名，不带协议，例如 `dev-app.example.test`
 - `LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN`
-  - 填后端直连域名，例如 `https://api.example.test`
-  - 这是本机 HTTPS 接管层真正转发到的远端后端上游
+  - 填本机 HTTPS 接管层真正转发到的后端上游
+  - 当前项目里通常直接填后端域名，例如 `https://api.example.test`
 - `LOCAL_APP_DEV_PROXY_VITE_ORIGIN`
   - 填本机 Vite 实际监听地址，例如 `https://[::1]:5175` 或 `https://localhost:5175`
 
@@ -306,7 +306,7 @@ npm run dev
 - OAuth 回调地址
   - 应和浏览器主入口域名保持一致，例如 `https://dev-app.example.test/auth/...`
 - 后端公开 HTTPS 入口
-  - 这是给本机 HTTPS 接管层作为上游目标使用的，例如 `https://api.example.test`
+  - 这是给本机 HTTPS 接管层作为逻辑上游使用的，例如 `https://api.example.test`
 
 如果这些地方填错，前端常见表现不是“页面打不开”，而是：
 
@@ -397,14 +397,17 @@ npm run host
 
 ```powershell
 npm run proxy:local-app
+npm run proxy:remote-backend-tunnel
 ```
 
 这个脚本是仓库里的 Node HTTPS 入口脚本：
 
 - 它会加载刚才生成的 `app-dev-local.pfx`
 - 默认监听本机 `443`
-- `/api` 和 `/auth` 会转发到远端后端
+- `/api`、`/auth` 以及其他后端拥有的同域路径会转发到后端上游
 - 其他请求会转发到本机 Vite
+
+如果你的后端上游填的是本机 loopback，例如 `https://127.0.0.1:15443`，那就再让 tunnel 脚本单独起一个本机 SSH 转发。
 
 如果你不想分两个终端，也可以直接执行：
 
@@ -412,7 +415,7 @@ npm run proxy:local-app
 npm run app-dev
 ```
 
-这个聚合命令会同时启动 `host` 和 `proxy:local-app`。
+这个聚合命令会同时启动 `host`、`proxy:local-app` 和 `proxy:remote-backend-tunnel`。
 
 ### 6. 做一次状态检查
 
@@ -427,6 +430,7 @@ npm run check:local-app
 - `hosts` 里是否已经有本地域名映射
 - `5175` 是否已经被 Vite 监听
 - `.env.local` 里的关键项是否齐全
+- 如果后端上游走本机 loopback，SSH tunnel 端口是否在监听
 - 本机 HTTPS 入口首页和 `/api/session/csrf-token` 是否能通
 
 如果你想单独看端口，也可以执行：
@@ -442,8 +446,9 @@ Get-NetTCPConnection -LocalPort 5175 -ErrorAction SilentlyContinue |
 
 - 本机 HTTPS 页面入口
 - HMR
-- 同域 `/api`
-- 同域 `/auth`
+- 同域 `/api` / `/auth`
+- 同域 `/config.js` / `/skin-origin-proxy/*` / `/downloads/*` / `/diagnostics*`
+- `MCA_BASE_URL/*`
 
 如果你还要复刻更多同域路径，就继续在仓库脚本基础上扩展，不要重新另起一套本地 HTTPS 工具链。
 
@@ -477,14 +482,18 @@ VITE_HMR_HOST=dev-app.example.test
 VITE_HMR_PROTOCOL=wss
 VITE_HMR_CLIENT_PORT=443
 LOCAL_APP_DEV_DOMAIN=dev-app.example.test
-LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN=https://api.example.test
+LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN=https://127.0.0.1:15443
+LOCAL_APP_DEV_PROXY_BACKEND_HOST_HEADER=dev-app.example.test
+LOCAL_APP_DEV_PROXY_BACKEND_SERVERNAME=dev-app.example.test
+LOCAL_APP_DEV_PROXY_TUNNEL_PORT=15443
 LOCAL_APP_DEV_PROXY_VITE_ORIGIN=https://[::1]:5175
 ```
 
 ### 3. 你的脑内映射
 
 - `dev-app.example.test` = 浏览器真正访问的站点入口
-- `api.example.test` = 本机 HTTPS 接管层背后的远端后端上游
+- `127.0.0.1:15443` = 本机 SSH tunnel 暴露出来的后端传输入口
+- 浏览器运行时里的 `API_BASE_URL` / `AUTH_BASE_URL` 仍然应该保持 `dev-app.example.test`
 - `skin.example.test` = 皮肤站网址
 - `/model`、`/basic`、`/assets/skin` = 开发时前端资源的public下的相对路径
 
@@ -513,14 +522,18 @@ LOCAL_APP_DEV_PROXY_VITE_ORIGIN=https://[::1]:5175
 
 这类脚本只假设你本机已经能通过标准 `ssh` / `scp` 连到自己的远端环境。
 
+如果你要做后端日常热重载开发，实际入口不是 `ref:backend:pull` 这类参考副本脚本，而是本机 `Official-backend` 通过 Mutagen 同步到 `/srv/ustb/dev/Official-backend`。对应入口是工作区任务 `backend-mutagen-auto-sync` / `backend-mutagen-validate`，或 `scripts/privacy/remote/ensure_backend_mutagen_sync.ps1`。
+
 它们不要求固定云厂商，也不要求固定网络接入方案。对脚本来说，最重要的是你先准备好一个可用的 SSH 目标名。
 
-推荐在本机 `~/.ssh/config` 中准备一个通用别名，例如：
+当前仓库默认 SSH 目标可以直接写成 `user@example.com`。
+
+如果你更想用别名而不是直接写 `user@host`，推荐在本机 `~/.ssh/config` 中准备一个通用别名，例如：
 
 ```sshconfig
-Host world-dev
+Host tencent-dev
   HostName ssh.example.test
-  User deploy
+  User user
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 ```
@@ -529,13 +542,13 @@ Host world-dev
 
 - 本机已经装好 `ssh` 和 `scp`
 - 远端用户已经能用密钥免密登录
-- 你的 SSH 目标名已经能直接执行 `ssh world-dev`
+- 你的 SSH 目标已经能直接执行 `ssh user@example.com`，或者你自定义的 SSH 别名
 - 如果你要做发布或参考副本同步，远端目录权限也已经准备好
 
-当前脚本默认使用的 SSH 目标名是 `world-dev`。如果你想换成自己的名字，可以设置：
+当前脚本默认使用的 SSH 目标是 `user@example.com`。如果你想换成自己的别名或其他目标，可以设置：
 
 ```powershell
-$env:WORLD_SSH_HOST = 'my-dev-host'
+$env:WORLD_SSH_HOST = 'tencent-dev'
 ```
 
 如果你的远端目录结构不是仓库默认约定，再额外设置对应环境变量即可。具体变量名见：

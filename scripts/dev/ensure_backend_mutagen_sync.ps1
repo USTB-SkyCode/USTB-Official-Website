@@ -5,7 +5,7 @@ param(
     [string]$SessionName = 'official-backend-dev',
     [string]$LocalRoot = '',
     [string]$RemoteRoot = '',
-    [string]$RemoteProdComposeRoot = '',
+    [string]$RemoteDevComposeRoot = '',
     [string]$InstallRoot = '',
     [double]$WatchInterval = 0.5
 )
@@ -16,15 +16,18 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'Resolve-RemoteScriptConfig.ps1')
 
 $projectRoot = Get-WorldProjectRoot -ScriptRoot $PSScriptRoot
-$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'world-dev'
+$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'user@example.com'
 $localRoot = Resolve-RemoteSetting -Value $LocalRoot -EnvName 'WORLD_BACKEND_REFERENCE_LOCAL_ROOT' -Default (Join-Path (Split-Path -Parent $projectRoot) 'Official-backend')
 $remoteRoot = Resolve-RemoteSetting -Value $RemoteRoot -EnvName 'WORLD_BACKEND_MUTAGEN_REMOTE_ROOT' -Default '/srv/ustb/dev/Official-backend'
-$remoteProdComposeRoot = Resolve-RemoteSetting -Value $RemoteProdComposeRoot -EnvName 'WORLD_BACKEND_PROD_COMPOSE_ROOT' -Default '/srv/ustb/dev/Official-backend/deploy/prod'
+$remoteDevComposeRoot = Resolve-RemoteSetting -Value $RemoteDevComposeRoot -EnvName 'WORLD_BACKEND_DEV_COMPOSE_ROOT' -Default '/srv/ustb/dev/Official-backend/deploy/dev'
 $installRoot = Resolve-RemoteSetting -Value $InstallRoot -EnvName 'WORLD_MUTAGEN_INSTALL_ROOT' -Default (Join-Path $env:USERPROFILE 'tools\mutagen')
 $mutagenExe = Join-Path $installRoot 'mutagen.exe'
 $mutagenAgents = Join-Path $installRoot 'mutagen-agents.tar.gz'
 
 $ignoreRules = @(
+    '.env',
+    'deploy/dev/.env',
+    'deploy/prod/.env',
     '__pycache__',
     '.pytest_cache',
     '.mypy_cache',
@@ -112,10 +115,25 @@ function Test-SessionNeedsRecreate {
         return $false
     }
 
+    $expectedAlpha = [regex]::Escape($localRoot)
+    $expectedBeta = [regex]::Escape("${sshHost}:$remoteRoot")
+    $requiredIgnorePatterns = @(
+        '(?m)^\s+\.env$',
+        '(?m)^\s+deploy/dev/\.env$',
+        '(?m)^\s+deploy/prod/\.env$'
+    )
+    $missingIgnoreRule = $false
+    foreach ($pattern in $requiredIgnorePatterns) {
+        if ($details -notmatch $pattern) {
+            $missingIgnoreRule = $true
+            break
+        }
+    }
+
     return (
-        $details -match '(?m)^\s+\.env$' -or
-        $details -match '(?m)^\s+deploy/dev/\.env$' -or
-        $details -match '(?m)^\s+deploy/prod/\.env$'
+        $missingIgnoreRule -or
+        $details -notmatch $expectedAlpha -or
+        $details -notmatch $expectedBeta
     )
 }
 
@@ -179,11 +197,14 @@ function Validate-State {
     Write-Output '=== Remote Root ==='
     Invoke-RemoteCommand "cd '$remoteRoot' && pwd && find . -maxdepth 2 -type d | sort | sed -n '1,80p'"
 
-    Write-Output '=== Production Compose Status ==='
-    Invoke-RemoteCommand "cd '$remoteProdComposeRoot' && docker compose ps"
+    Write-Output '=== Development Compose Status ==='
+    Invoke-RemoteCommand "cd '$remoteDevComposeRoot' && pwd && docker compose ps"
 
-    Write-Output '=== Production Health ==='
-    Invoke-RemoteCommand "docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' official-backend-app 2>/dev/null || true"
+    Write-Output '=== Dev Backend Health ==='
+    Invoke-RemoteCommand "docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' official-backend-dev-app 2>/dev/null || echo missing"
+
+    Write-Output '=== Dev Worker State ==='
+    Invoke-RemoteCommand "docker inspect --format='{{.State.Status}}' official-backend-dev-worker 2>/dev/null || echo missing"
 }
 
 function Show-WatchDisplay {

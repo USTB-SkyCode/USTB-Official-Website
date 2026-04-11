@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "app-dev": "run-p host proxy:local-app",
-    "app-dev:stop": "powershell -Command \"$ports = 443,5175,5176; Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $ports -contains $_.LocalPort } | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $proc = Get-Process -Id $_ -ErrorAction SilentlyContinue; if ($proc -and $proc.ProcessName -eq 'node') { taskkill /PID $_ /F | Out-Null } }\"",
+    "app-dev": "run-p host proxy:local-app proxy:remote-backend-tunnel",
+    "app-dev:stop": "powershell -Command \"$ports = 443,5175,5176,15443; Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $ports -contains $_.LocalPort } | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $proc = Get-Process -Id $_ -ErrorAction SilentlyContinue; if ($proc -and $proc.ProcessName -in @('node', 'ssh')) { taskkill /PID $_ /F | Out-Null } }\"",
     "release:static": "run-s build:prod:static publish:static",
     "release:static:linux": "run-s build:prod:static publish:static:linux",
     "ref:front:push": "powershell -ExecutionPolicy Bypass -File ./scripts/dev/push_front_reference.ps1",
@@ -21,6 +21,7 @@
     "host": "vite --host",
     "preview": "vite preview",
     "proxy:local-app": "node ./scripts/dev/local_proxy/local_app_dev_proxy.mjs",
+    "proxy:remote-backend-tunnel": "powershell -ExecutionPolicy Bypass -File ./scripts/dev/local_proxy/start_backend_https_tunnel.ps1",
     "setup:local-app": "powershell -ExecutionPolicy Bypass -File ./scripts/dev/local_proxy/setup_local_app_dev.ps1",
     "check:local-app": "powershell -ExecutionPolicy Bypass -File ./scripts/dev/local_proxy/check_local_app_dev.ps1",
     "format": "prettier --write src/",

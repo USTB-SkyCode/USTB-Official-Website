@@ -83,32 +83,36 @@ npm run type-check
 - `npm run ref:front:push`
 - `npm run ref:backend:pull`
 
+注意：后端日常热重载链路不是靠 `npm run ref:backend:pull`。当前真实链路是本机 `Official-backend` 通过 Mutagen 同步到 `/srv/ustb/dev/Official-backend`，对应入口是工作区任务 `backend-mutagen-auto-sync` / `backend-mutagen-validate`，或 `scripts/privacy/remote/ensure_backend_mutagen_sync.ps1`。
+
 这些脚本不关心你底层走的是普通 SSH、内网跳板，还是你自己配置的其他 SSH 到达方式。它们只认一个 SSH 目标名。
 
-推荐先在本机 `~/.ssh/config` 里准备一个通用别名，例如：
+当前仓库默认 SSH 目标可以直接写成 `user@example.com`。
+
+如果你更想用别名而不是直接写 `user@host`，推荐先在本机 `~/.ssh/config` 里准备一个通用别名，例如：
 
 ```sshconfig
-Host world-dev
+Host tencent-dev
   HostName ssh.example.test
-  User deploy
+  User user
   IdentityFile ~/.ssh/id_ed25519
   IdentitiesOnly yes
 ```
 
 建议使用免密 SSH，也就是密钥登录且不要依赖交互式密码输入。因为这些脚本是非交互式的，过程中会直接调用 `ssh` 和 `scp`。
 
-默认脚本会把 SSH 目标名当成 `world-dev`。如果你的别名不是这个，可以用两种方式覆盖：
+默认脚本会把 SSH 目标当成 `user@example.com`。如果你想改成自己的别名或其他目标，可以用两种方式覆盖：
 
 1. 设置环境变量：
 
 ```powershell
-$env:WORLD_SSH_HOST = 'my-dev-host'
+$env:WORLD_SSH_HOST = 'tencent-dev'
 ```
 
 2. 直接执行脚本并传参：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/dev/publish_static.ps1 -SshHost my-dev-host
+powershell -ExecutionPolicy Bypass -File ./scripts/dev/publish_static.ps1 -SshHost tencent-dev
 ```
 
 如果你的远端目录结构和仓库默认约定不同，也可以通过环境变量覆盖：
@@ -140,7 +144,7 @@ powershell -ExecutionPolicy Bypass -File ./scripts/dev/publish_static.ps1 -SshHo
 - `npm run dev`
   - 只启动本机 Vite。
 - `npm run app-dev`
-  - 同时启动本机 Vite 和本地域名 HTTPS 接管入口进程。
+  - 同时启动本机 Vite 和本地域名 HTTPS 接管入口。
 - `npm run app-dev:stop`
   - 停掉本地接管链路里常用的 Node 监听端口。
 - `npm run release:static`

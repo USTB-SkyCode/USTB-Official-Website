@@ -433,10 +433,17 @@ onBeforeUnmount(() => {
   z-index: 40;
   align-items: center;
   justify-content: center;
-  background-color: rgb(8 12 20 / 28%);
-  background-image: radial-gradient(circle at top, rgb(76 132 255 / 14%), transparent 42%);
+  padding: 16px;
+  background:
+    radial-gradient(
+      circle at top,
+      color-mix(in srgb, var(--theme-accent) 18%, transparent),
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--theme-surface-glass-muted) 74%, transparent);
   inset: 0;
   backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
   pointer-events: auto;
 }
 
@@ -445,15 +452,23 @@ onBeforeUnmount(() => {
   gap: 14px;
   width: min(420px, calc(100vw - 32px));
   padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--theme-border-strong) 86%, transparent);
   border-radius: 24px;
   background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--el-bg-color-overlay, #fff) 92%, rgb(90 142 255 / 10%)) 0%,
-    color-mix(in srgb, var(--el-bg-color-overlay, #fff) 97%, transparent) 100%
-  );
-  box-shadow: 0 24px 80px rgb(15 23 42 / 20%);
-  color: var(--el-text-color-primary, #111827);
+      180deg,
+      color-mix(in srgb, var(--theme-accent-soft) 54%, transparent) 0%,
+      transparent 38%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-surface-glass-strong) 92%, transparent) 0%,
+      color-mix(in srgb, var(--theme-surface-glass) 84%, transparent) 100%
+    );
+  box-shadow: var(--theme-shadow-hero);
+  color: var(--theme-text-strong);
   text-align: left;
+  backdrop-filter: blur(20px) saturate(135%);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
 }
 
 .confirm-kicker,
@@ -462,11 +477,7 @@ onBeforeUnmount(() => {
 }
 
 .confirm-kicker {
-  color: color-mix(
-    in srgb,
-    var(--el-color-primary, #3b82f6) 72%,
-    var(--el-text-color-primary, #111827) 18%
-  );
+  color: var(--theme-accent);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -480,7 +491,7 @@ onBeforeUnmount(() => {
 }
 
 .confirm-copy {
-  color: color-mix(in srgb, var(--el-text-color-primary, #111827) 74%, transparent);
+  color: var(--theme-text-muted);
   line-height: 1.7;
 }
 
@@ -502,7 +513,7 @@ onBeforeUnmount(() => {
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
-    background-color 180ms ease,
+    background 180ms ease,
     border-color 180ms ease,
     color 180ms ease;
   cursor: pointer;
@@ -513,41 +524,48 @@ onBeforeUnmount(() => {
 }
 
 .confirm-button--secondary {
-  border-color: color-mix(in srgb, var(--el-border-color, #cbd5e1) 82%, transparent);
-  background: color-mix(in srgb, var(--el-fill-color, #f8fafc) 86%, transparent);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 28%);
-  color: var(--el-text-color-primary, #111827);
+  border-color: color-mix(in srgb, var(--theme-border-strong) 82%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-surface-glass-strong) 90%, transparent),
+    color-mix(in srgb, var(--theme-surface-glass) 82%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--theme-border-soft) 78%, transparent),
+    0 8px 16px color-mix(in srgb, var(--theme-accent) 8%, transparent);
+  color: var(--theme-text-strong);
 }
 
 .confirm-button--secondary:hover {
-  border-color: color-mix(
-    in srgb,
-    var(--el-color-primary, #3b82f6) 28%,
-    var(--el-border-color, #cbd5e1)
-  );
-  background: color-mix(
-    in srgb,
-    var(--el-fill-color, #f8fafc) 72%,
-    var(--el-color-primary, #3b82f6) 8%
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-border-strong));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-accent-soft) 34%, var(--theme-surface-glass-strong)),
+    color-mix(in srgb, var(--theme-surface-glass) 84%, transparent)
   );
 }
 
 .confirm-button--primary {
+  border-color: color-mix(in srgb, var(--theme-accent) 34%, transparent);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--el-color-primary, #3b82f6) 88%, white 8%),
-    color-mix(in srgb, var(--el-color-primary, #3b82f6) 72%, rgb(14 165 233) 18%)
+    color-mix(in srgb, var(--theme-accent) 88%, var(--theme-surface-glass-strong) 12%),
+    color-mix(in srgb, var(--theme-accent) 74%, var(--theme-accent-soft) 26%)
   );
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--el-color-primary, #3b82f6) 26%, transparent);
-  color: white;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--theme-accent) 28%, transparent);
+  color: var(--el-color-white, #fff);
 }
 
 .confirm-button--primary:hover {
-  box-shadow: 0 18px 34px color-mix(in srgb, var(--el-color-primary, #3b82f6) 34%, transparent);
+  box-shadow: 0 18px 34px color-mix(in srgb, var(--theme-accent) 34%, transparent);
 }
 
 .confirm-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--el-color-primary, #3b82f6) 72%, white 14%);
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--theme-accent) 72%,
+    var(--theme-surface-glass-strong) 12%
+  );
   outline-offset: 2px;
 }
 

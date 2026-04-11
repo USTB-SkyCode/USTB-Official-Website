@@ -66,7 +66,8 @@ Write-Host ''
 Write-Host 'Next steps:' -ForegroundColor Yellow
 Write-Host '1. Start Vite: npm run host'
 Write-Host '2. Start local proxy: npm run proxy:local-app'
-Write-Host '3. Or run both: npm run app-dev'
+Write-Host '3. Start backend tunnel: npm run proxy:remote-backend-tunnel'
+Write-Host '4. Or run all required processes together: npm run app-dev'
 if (-not $hostsUpdated) {
-  Write-Host '4. If hosts was not updated automatically, add the hosts entry manually as administrator.'
+  Write-Host '5. If hosts was not updated automatically, add the hosts entry manually as administrator.'
 }

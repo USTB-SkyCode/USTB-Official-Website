@@ -17,7 +17,7 @@ Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'Resolve-RemoteScriptConfig.ps1')
 
 $projectRoot = Get-WorldProjectRoot -ScriptRoot $PSScriptRoot
-$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'world-dev'
+$sshHost = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'user@example.com'
 $localRoot = Resolve-RemoteSetting -Value $LocalRoot -EnvName 'WORLD_BACKEND_REFERENCE_LOCAL_ROOT' -Default (Join-Path (Split-Path -Parent $projectRoot) 'Official-backend')
 $remoteRoot = Resolve-RemoteSetting -Value $RemoteRoot -EnvName 'WORLD_BACKEND_MUTAGEN_REMOTE_ROOT' -Default '/srv/ustb/dev/Official-backend'
 $remoteDevComposeRoot = Resolve-RemoteSetting -Value $RemoteDevComposeRoot -EnvName 'WORLD_BACKEND_DEV_COMPOSE_ROOT' -Default '/srv/ustb/dev/Official-backend/deploy/dev'

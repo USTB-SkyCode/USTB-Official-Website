@@ -34,11 +34,15 @@ function loadEnvFile(filePath) {
 const projectRoot = process.cwd()
 const fileEnv = loadEnvFile(path.join(projectRoot, '.env.local'))
 const env = { ...fileEnv, ...process.env }
+const runtimeEnv = loadEnvFile(path.join(projectRoot, '.env'))
 
 const domain = env.LOCAL_APP_DEV_DOMAIN || 'local-app.example.test'
 const proxyPort = Number(env.LOCAL_APP_DEV_PROXY_PORT || 443)
 const viteOrigin = new URL(env.LOCAL_APP_DEV_PROXY_VITE_ORIGIN || 'https://[::1]:5175')
 const backendOrigin = new URL(env.LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN || 'https://api.example.test')
+const mcaBaseUrl = (runtimeEnv.MCA_BASE_URL || '/resource/mca').trim() || '/resource/mca'
+const backendHostHeader = env.LOCAL_APP_DEV_PROXY_BACKEND_HOST_HEADER?.trim() || ''
+const backendServerName = env.LOCAL_APP_DEV_PROXY_BACKEND_SERVERNAME?.trim() || ''
 const defaultPfxPath = path.join(
   os.homedir(),
   '.config',
@@ -55,17 +59,51 @@ if (!fs.existsSync(pfxPath)) {
 }
 
 function pickTarget(requestPath) {
-  if (/^\/(api|auth)(\/|$)/.test(requestPath)) {
+  if (
+    /^\/(api|auth)(\/|$)/.test(requestPath) ||
+    /^\/skin-origin-proxy(\/|$)/.test(requestPath) ||
+    /^\/downloads(\/|$)/.test(requestPath) ||
+    /^\/diagnostics(\/|$)/.test(requestPath) ||
+    requestPath.startsWith(`${mcaBaseUrl}/`)
+  ) {
     return backendOrigin
   }
 
   return viteOrigin
 }
 
+function isBackendTarget(requestPath) {
+  return pickTarget(requestPath) === backendOrigin
+}
+
+function isMcaRequest(requestPath) {
+  return requestPath.startsWith(`${mcaBaseUrl}/`)
+}
+
+function stripPort(hostHeader) {
+  if (!hostHeader) {
+    return ''
+  }
+
+  if (hostHeader.startsWith('[')) {
+    const closing = hostHeader.indexOf(']')
+    return closing >= 0 ? hostHeader.slice(1, closing) : hostHeader
+  }
+
+  return hostHeader.split(':', 1)[0]
+}
+
 function proxyRequest(clientRequest, clientResponse) {
   const target = pickTarget(clientRequest.url || '/')
   const transport = target.protocol === 'https:' ? https : http
-  const headers = { ...clientRequest.headers, host: target.host }
+  const backendRequest = isBackendTarget(clientRequest.url || '/')
+  const hostHeader = backendRequest
+    ? backendHostHeader || clientRequest.headers.host || target.host
+    : target.host
+  const headers = { ...clientRequest.headers, host: hostHeader }
+  const servername = backendRequest
+    ? backendServerName || stripPort(hostHeader)
+    : target.hostname
 
   const upstreamRequest = transport.request(
     {
@@ -76,15 +114,26 @@ function proxyRequest(clientRequest, clientResponse) {
       path: clientRequest.url,
       headers,
       rejectUnauthorized: false,
-      servername: target.hostname,
+      servername,
     },
     upstreamResponse => {
+      const requestPath = clientRequest.url || '/'
+      if (backendRequest && (isMcaRequest(requestPath) || (upstreamResponse.statusCode || 0) >= 400)) {
+        console.log(
+          `[local-app-proxy] ${clientRequest.method || 'GET'} ${requestPath} -> backend ${upstreamResponse.statusCode || 502}`,
+        )
+      }
       clientResponse.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers)
       upstreamResponse.pipe(clientResponse)
     },
   )
 
   upstreamRequest.on('error', error => {
+    if (backendRequest) {
+      console.warn(
+        `[local-app-proxy] ${clientRequest.method || 'GET'} ${clientRequest.url || '/'} upstream error: ${error.message}`,
+      )
+    }
     clientResponse.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' })
     clientResponse.end(`Local app-dev proxy upstream error: ${error.message}`)
   })
@@ -119,7 +168,16 @@ function createUpgradeHead(request, target) {
 
 function proxyUpgrade(request, socket, head) {
   const target = pickTarget(request.url || '/')
+  const backendRequest = isBackendTarget(request.url || '/')
   const targetPort = Number(target.port || (target.protocol === 'https:' ? 443 : 80))
+  const hostHeader = backendRequest
+    ? backendHostHeader || request.headers.host || target.host
+    : target.host
+  const servername = backendRequest
+    ? backendServerName || stripPort(hostHeader)
+    : target.hostname
+
+  request.headers.host = hostHeader
 
   const upstream =
     target.protocol === 'https:'
@@ -127,7 +185,7 @@ function proxyUpgrade(request, socket, head) {
           host: target.hostname,
           port: targetPort,
           rejectUnauthorized: false,
-          servername: target.hostname,
+          servername,
         })
       : net.connect({ host: target.hostname, port: targetPort })
 
@@ -159,5 +217,7 @@ const server = https.createServer(
 server.on('upgrade', proxyUpgrade)
 
 server.listen(proxyPort, '0.0.0.0', () => {
-  console.log(`[local-app-proxy] https://${domain}:${proxyPort} -> vite ${viteOrigin.origin}, backend ${backendOrigin.origin}`)
+  console.log(
+    `[local-app-proxy] https://${domain}:${proxyPort} -> vite ${viteOrigin.origin}, backend ${backendOrigin.origin}, mca ${mcaBaseUrl}`,
+  )
 })

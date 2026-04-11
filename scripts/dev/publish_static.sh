@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SSH_HOST="${WORLD_SSH_HOST:-world-dev}"
+SSH_HOST="${WORLD_SSH_HOST:-user@example.com}"
 REMOTE_BASE_ROOT="${WORLD_REMOTE_ROOT:-/srv/ustb}"
 WORKSPACE="${WORLD_WORKSPACE_ROOT:-}"
 REMOTE_STAGE_BASE="${WORLD_STATIC_STAGE_ROOT:-}"

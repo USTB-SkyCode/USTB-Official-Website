@@ -12,7 +12,7 @@ Set-StrictMode -Version Latest
 
 . (Join-Path $PSScriptRoot 'Resolve-RemoteScriptConfig.ps1')
 
-$Remote = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'world-dev' -ScriptRoot $PSScriptRoot
+$Remote = Resolve-RemoteSetting -Value $SshHost -EnvName 'WORLD_SSH_HOST' -Default 'user@example.com' -ScriptRoot $PSScriptRoot
 $Workspace = Resolve-RemoteSetting -Value $Workspace -EnvName 'WORLD_WORKSPACE_ROOT' -Default (Get-WorldProjectRoot -ScriptRoot $PSScriptRoot) -ScriptRoot $PSScriptRoot
 $RemoteBaseRoot = Resolve-RemoteSetting -Value $RemoteBaseRoot -EnvName 'WORLD_REMOTE_ROOT' -Default '/srv/ustb' -ScriptRoot $PSScriptRoot
 

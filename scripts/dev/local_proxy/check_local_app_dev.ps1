@@ -8,6 +8,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 . (Join-Path (Split-Path $PSScriptRoot -Parent) 'Resolve-RemoteScriptConfig.ps1')
 $DevScriptRoot = Split-Path $PSScriptRoot -Parent
+$ProjectRoot = Get-WorldProjectRoot -ScriptRoot $DevScriptRoot
 
 $Domain = Resolve-RemoteSetting -Value $Domain -EnvName 'LOCAL_APP_DEV_DOMAIN' -Default 'local-app.example.test' -ScriptRoot $DevScriptRoot
 if ($VitePort -le 0) {
@@ -18,6 +19,11 @@ if ($VitePort -le 0) {
   } else {
     $VitePort = 5175
   }
+}
+
+$EnvFilePath = $EnvFile
+if (-not [System.IO.Path]::IsPathRooted($EnvFilePath)) {
+  $EnvFilePath = Join-Path $ProjectRoot $EnvFilePath
 }
 
 Write-Host '== Local app-dev check ==' -ForegroundColor Cyan
@@ -51,9 +57,9 @@ if ($conn) {
 
 Write-Host ''
 Write-Host '[env]' -ForegroundColor Yellow
-if (Test-Path $EnvFile) {
-  $envMap = @{}
-  foreach ($line in (Get-Content $EnvFile)) {
+$envMap = @{}
+if (Test-Path $EnvFilePath) {
+  foreach ($line in (Get-Content $EnvFilePath)) {
     if ([string]::IsNullOrWhiteSpace($line)) {
       continue
     }
@@ -106,7 +112,63 @@ if (Test-Path $EnvFile) {
     Write-Host "OK: $key=$actualValue"
   }
 } else {
-  Write-Host "NOT FOUND: $EnvFile"
+  Write-Host "NOT FOUND: $EnvFilePath"
+}
+
+Write-Host ''
+Write-Host '[backend tunnel]' -ForegroundColor Yellow
+$remoteOrigin = ''
+if ($envMap.ContainsKey('LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN')) {
+  $remoteOrigin = [string]$envMap['LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN']
+}
+
+$tunnelPort = 0
+if ($envMap.ContainsKey('LOCAL_APP_DEV_PROXY_TUNNEL_PORT')) {
+  $parsedTunnelPort = 0
+  if ([int]::TryParse([string]$envMap['LOCAL_APP_DEV_PROXY_TUNNEL_PORT'], [ref]$parsedTunnelPort)) {
+    $tunnelPort = $parsedTunnelPort
+  }
+}
+
+$remoteUri = $null
+if (-not [string]::IsNullOrWhiteSpace($remoteOrigin)) {
+  try {
+    $remoteUri = [Uri]$remoteOrigin
+  } catch {
+    $remoteUri = $null
+  }
+}
+
+$usesLocalTunnel = $false
+if ($remoteUri -and $remoteUri.IsAbsoluteUri) {
+  $usesLocalTunnel = $remoteUri.Host -in @('127.0.0.1', 'localhost', '[::1]', '::1')
+  if ($tunnelPort -le 0 -and $usesLocalTunnel -and $remoteUri.Port -gt 0) {
+    $tunnelPort = $remoteUri.Port
+  }
+}
+
+if ($usesLocalTunnel) {
+  foreach ($key in @('LOCAL_APP_DEV_PROXY_BACKEND_HOST_HEADER', 'LOCAL_APP_DEV_PROXY_BACKEND_SERVERNAME')) {
+    if (-not $envMap.ContainsKey($key) -or [string]::IsNullOrWhiteSpace([string]$envMap[$key])) {
+      Write-Host "MISSING/EMPTY: $key"
+    } else {
+      Write-Host "OK: $key=$($envMap[$key])"
+    }
+  }
+
+  if ($tunnelPort -gt 0) {
+    $tunnelConn = Get-NetTCPConnection -LocalPort $tunnelPort | Select-Object -First 1
+    if ($tunnelConn) {
+      $tunnelProc = Get-CimInstance Win32_Process -Filter "ProcessId = $($tunnelConn.OwningProcess)"
+      Write-Host "Port $tunnelPort listener: $($tunnelConn.LocalAddress):$($tunnelConn.LocalPort) pid=$($tunnelConn.OwningProcess) name=$($tunnelProc.Name)"
+    } else {
+      Write-Host "NOT LISTENING: nothing bound to backend tunnel port $tunnelPort"
+    }
+  }
+} elseif (-not [string]::IsNullOrWhiteSpace($remoteOrigin)) {
+  Write-Host "INFO: backend upstream is $remoteOrigin"
+} else {
+  Write-Host 'SKIP: LOCAL_APP_DEV_PROXY_REMOTE_ORIGIN not set'
 }
 
 Write-Host ''
