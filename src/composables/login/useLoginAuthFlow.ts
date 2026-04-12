@@ -41,10 +41,15 @@ export function useLoginAuthFlow(options: {
   let pendingHref = ''
   let popupWindow: Window | null = null
   let popupClosePollTimer: ReturnType<typeof setInterval> | null = null
+  let autoLoginTimer: ReturnType<typeof setTimeout> | null = null
   let authPopupChannel: BroadcastChannel | null = null
 
   const isPopupCallback = computed(() => route.query.popupAuthComplete === '1')
   const popupRedirectTarget = computed(() => resolvePostLoginTarget(route.query.redirect))
+
+  function hasAuthenticatedUser() {
+    return !!options.currentUser.value && options.currentUser.value.provider !== 'guest'
+  }
 
   async function completeLogin(target: unknown = route.query.redirect) {
     await router.replace(resolvePostLoginTarget(target))
@@ -89,6 +94,13 @@ export function useLoginAuthFlow(options: {
     if (popupClosePollTimer !== null) {
       clearInterval(popupClosePollTimer)
       popupClosePollTimer = null
+    }
+  }
+
+  function clearAutoLoginTimer() {
+    if (autoLoginTimer !== null) {
+      clearTimeout(autoLoginTimer)
+      autoLoginTimer = null
     }
   }
 
@@ -148,6 +160,8 @@ export function useLoginAuthFlow(options: {
   }
 
   function startAuthFlow(authHref: string, provider: string) {
+    clearAutoLoginTimer()
+
     if (options.mobileDevice.value) {
       setAutoLoginGuard(provider)
       window.location.assign(authHref)
@@ -158,6 +172,8 @@ export function useLoginAuthFlow(options: {
   }
 
   function launchProvider(provider: string, launchOptions: { skipConfirm?: boolean } = {}) {
+    clearAutoLoginTimer()
+
     let authHref = ''
     const popupFlow = !options.mobileDevice.value
     try {
@@ -270,7 +286,7 @@ export function useLoginAuthFlow(options: {
   }
 
   async function redirectAuthenticatedUser() {
-    if (!options.currentUser.value) {
+    if (!hasAuthenticatedUser()) {
       return
     }
 
@@ -290,6 +306,7 @@ export function useLoginAuthFlow(options: {
 
   function confirm(keep: boolean) {
     showConfirm.value = false
+    clearAutoLoginTimer()
 
     const provider = pendingHref.match(/\/auth\/([^/?#]+)/)?.[1]
     if (!provider) {
@@ -304,53 +321,67 @@ export function useLoginAuthFlow(options: {
   }
 
   onMounted(() => {
-    if (isPopupCallback.value) {
-      clearAutoLoginGuard()
-      void finalizePopupCallback()
-      return
-    }
-
-    if (options.currentUser.value) {
-      void redirectAuthenticatedUser()
-      return
-    }
-
-    if (typeof BroadcastChannel !== 'undefined') {
-      authPopupChannel = new BroadcastChannel(AUTH_POPUP_CHANNEL_NAME)
-      authPopupChannel.addEventListener('message', handleAuthPopupBroadcast)
-    }
-
-    window.addEventListener('message', handleAuthPopupMessage)
-    window.addEventListener('storage', handleAuthPopupStorage)
-
-    const last = getPersistChoice()
-    if (!last?.persist || typeof last.provider !== 'string') {
-      clearAutoLoginGuard()
-      return
-    }
-
-    if (getAutoLoginGuard() === last.provider) {
-      return
-    }
-
-    setTimeout(() => {
-      try {
-        pendingHref = getProviderAuthHref(last.provider, !options.mobileDevice.value)
-      } catch (error) {
-        console.error('auto login build auth url failed', error)
-        notify.error('自动登录入口未配置，请检查 /config.js 中的 APP_CONFIG.AUTH_BASE_URL')
+    void (async () => {
+      if (isPopupCallback.value) {
         clearAutoLoginGuard()
+        await finalizePopupCallback()
         return
       }
 
-      startAuthFlow(pendingHref, last.provider)
-    }, AUTO_LOGIN_DELAY_MS)
+      if (typeof BroadcastChannel !== 'undefined') {
+        authPopupChannel = new BroadcastChannel(AUTH_POPUP_CHANNEL_NAME)
+        authPopupChannel.addEventListener('message', handleAuthPopupBroadcast)
+      }
+
+      window.addEventListener('message', handleAuthPopupMessage)
+      window.addEventListener('storage', handleAuthPopupStorage)
+
+      const last = getPersistChoice()
+      if (!last?.persist || typeof last.provider !== 'string') {
+        if (hasAuthenticatedUser()) {
+          await redirectAuthenticatedUser()
+        } else {
+          clearAutoLoginGuard()
+        }
+        return
+      }
+
+      try {
+        await options.fetchUser({ preserveGuest: false })
+      } catch (error) {
+        console.warn('auto login hydration failed', error)
+      }
+
+      if (hasAuthenticatedUser()) {
+        await redirectAuthenticatedUser()
+        return
+      }
+
+      if (getAutoLoginGuard() === last.provider) {
+        return
+      }
+
+      clearAutoLoginTimer()
+      autoLoginTimer = setTimeout(() => {
+        autoLoginTimer = null
+        try {
+          pendingHref = getProviderAuthHref(last.provider, !options.mobileDevice.value)
+        } catch (error) {
+          console.error('auto login build auth url failed', error)
+          notify.error('自动登录入口未配置，请检查 /config.js 中的 APP_CONFIG.AUTH_BASE_URL')
+          clearAutoLoginGuard()
+          return
+        }
+
+        startAuthFlow(pendingHref, last.provider)
+      }, AUTO_LOGIN_DELAY_MS)
+    })()
   })
 
   watch(
     () => options.currentUser.value,
     nextUser => {
-      if (isPopupCallback.value || !nextUser) {
+      if (isPopupCallback.value || !nextUser || nextUser.provider === 'guest') {
         return
       }
 
@@ -364,6 +395,7 @@ export function useLoginAuthFlow(options: {
     authPopupChannel?.removeEventListener('message', handleAuthPopupBroadcast)
     authPopupChannel?.close()
     authPopupChannel = null
+    clearAutoLoginTimer()
     clearPopupClosePollTimer()
   })
 

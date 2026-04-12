@@ -78,4 +78,4 @@ curl.exe https://<your-dev-host>/config.js
 | `npm run build` | 全量构建（含 WASM） |
 | `npm run build:resource` | 编译资源包到 `public/packs/` |
 
-更完整的本地开发细节见 [docs/development/open-source-local-dev.md](docs/development/open-source-local-dev.md) 和 [dev.md](dev.md)。
+更完整的本地开发细节见 [docs/development/open-source-local-dev.md](docs/development/open-source-local-dev.md)。

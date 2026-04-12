@@ -1,5 +1,12 @@
 import { extractChunkData } from './RegionParser'
 
+type CachedRegionEntry = {
+  buffer: ArrayBuffer
+  fetchedAt: number
+}
+
+const REGION_CACHE_REVALIDATE_MS = 1000
+
 async function readFetchErrorSummary(response: Response): Promise<string> {
   try {
     const raw = (await response.text()).trim()
@@ -21,7 +28,7 @@ function withCacheBust(url: string): string {
 }
 
 async function fetchRegionBuffer(url: string): Promise<ArrayBuffer> {
-  const response = await fetch(url)
+  const response = await fetch(url, { cache: 'no-cache' })
   if (response.status === 404) {
     return new ArrayBuffer(0)
   }
@@ -63,8 +70,8 @@ async function fetchRegionBuffer(url: string): Promise<ArrayBuffer> {
  *  - 负责区块坐标到 Region 文件的映射与提取
  */
 export class RegionManager {
-  // 区域缓存，键为 Region 文件名。
-  private cache = new Map<string, ArrayBuffer>()
+  // 区域缓存，键为最终请求 URL，避免跨世界/跨版本路径复用旧数据。
+  private cache = new Map<string, CachedRegionEntry>()
   // 进行中的加载请求，避免同一文件重复获取。
   private inflight = new Map<string, Promise<ArrayBuffer>>()
 
@@ -80,58 +87,78 @@ export class RegionManager {
   constructor(private basePath: string | null = null) {}
 
   public setBasePath(basePath: string) {
+    if (this.basePath === basePath) {
+      return
+    }
+
     this.basePath = basePath
+    this.clear()
   }
 
   public setRegionUrlResolver(resolver: ((regionX: number, regionZ: number) => string) | null) {
+    if (this.regionUrlResolver === resolver) {
+      return
+    }
+
     this.regionUrlResolver = resolver
+    this.clear()
   }
 
   // 读取区块压缩数据；缓存缺失时触发 Region 文件加载。
   async loadChunkData(chunkX: number, chunkZ: number): Promise<Uint8Array | undefined> {
     const rx = Math.floor(chunkX / 32)
     const rz = Math.floor(chunkZ / 32)
-    // 生成 Region 文件名，必要时交给外部 resolver 改写 URL。
-    const key = `r.${rx}.${rz}.mca`
+    const fileName = `r.${rx}.${rz}.mca`
+    const url = this.regionUrlResolver
+      ? this.regionUrlResolver(rx, rz)
+      : this.basePath
+        ? `${this.basePath}/${fileName}`
+        : null
 
-    let buffer = this.cache.get(key)
+    if (!url) {
+      throw new Error('RegionManager requires an explicit world source before loading chunks')
+    }
 
-    if (!buffer) {
-      // 缓存未命中时，优先复用同 key 的在途请求。
-      let promise = this.inflight.get(key)
+    let entry = this.cache.get(url)
+    const shouldRefresh = !entry || Date.now() - entry.fetchedAt >= REGION_CACHE_REVALIDATE_MS
+
+    if (shouldRefresh) {
+      // 缓存未命中或进入重校验窗口时，优先复用同 URL 的在途请求。
+      let promise = this.inflight.get(url)
       if (!promise) {
-        const url = this.regionUrlResolver
-          ? this.regionUrlResolver(rx, rz)
-          : this.basePath
-            ? `${this.basePath}/${key}`
-            : null
-        if (!url) {
-          throw new Error('RegionManager requires an explicit world source before loading chunks')
-        }
-        // 发起 Region 文件加载。
         promise = fetchRegionBuffer(url)
-        this.inflight.set(key, promise)
+        this.inflight.set(url, promise)
       }
 
       try {
-        buffer = await promise
+        const buffer = await promise
         // 404 会返回空 buffer，此时视为区域不存在而非损坏数据。
         if (buffer.byteLength > 0) {
-          this.cache.set(key, buffer)
-          this.updateLru(key)
+          entry = {
+            buffer,
+            fetchedAt: Date.now(),
+          }
+          this.cache.set(url, entry)
+          this.updateLru(url)
         } else {
+          this.cache.delete(url)
           // 区域文件不存在时，当前区块直接视为缺失。
           return undefined
         }
       } catch (e) {
-        console.warn(`[RegionManager] Failed to load ${key}:`, e)
+        console.warn(`[RegionManager] Failed to load ${fileName}:`, e)
         return undefined
       } finally {
-        this.inflight.delete(key)
+        this.inflight.delete(url)
       }
     } else {
       // 缓存命中后刷新 LRU。
-      this.updateLru(key)
+      this.updateLru(url)
+    }
+
+    const buffer = entry?.buffer
+    if (!buffer) {
+      return undefined
     }
 
     // 从 Region 二进制中提取目标 chunk 的压缩数据。

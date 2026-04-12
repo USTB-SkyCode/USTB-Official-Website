@@ -14,7 +14,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: Login, meta: { public: true } },
     { path: '/home', component: Home },
-    { path: '/admin', component: Admin },
+    { path: '/admin', component: Admin, meta: { requiresAdmin: true } },
     { path: '/me', component: Self },
     ...renderTestRoutes,
   ],
@@ -24,6 +24,24 @@ router.beforeEach(async to => {
   if (to.meta?.public) return true
 
   const userStore = useUserStore()
+
+  if (to.meta?.requiresAdmin) {
+    try {
+      await userStore.fetchUser({ preserveGuest: false })
+    } catch {
+      console.warn('fetch admin user failed')
+    }
+
+    if (!userStore.user) {
+      return { path: '/', query: { redirect: to.fullPath } }
+    }
+
+    if (!userStore.isAdmin) {
+      return { path: '/home' }
+    }
+
+    return true
+  }
 
   if (userStore.isGuest) {
     void userStore.fetchUser({ preserveGuest: true })

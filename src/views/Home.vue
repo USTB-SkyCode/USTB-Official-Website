@@ -82,6 +82,8 @@ const userStore = useUserStore()
 const {
   pageFrameMode,
   surfaceActivationPlan,
+  displayModePreference,
+  hasRememberedDisplayMode,
   homeActiveTab,
   homeExploreInteractionActive,
   homeExploreUiReveal,
@@ -152,6 +154,20 @@ function onTabChange(newTab: typeof activeTab.value) {
   if (newTab === activeTab.value) return
 
   if (newTab === 'explore' && !takeoverEnabled.value) {
+    if (hasRememberedDisplayMode.value) {
+      if (displayModePreference.value === 'engine') {
+        if (takeoverBlockedReason.value) {
+          notify.warning(`校园游览当前不可用：${takeoverBlockedReason.value}`)
+        } else {
+          setTakeoverEnabled(true)
+        }
+      }
+
+      saveProgress()
+      activeTab.value = newTab as typeof activeTab.value
+      return
+    }
+
     if (takeoverBlockedReason.value) {
       notify.warning(`校园游览当前不可用：${takeoverBlockedReason.value}`)
       return
@@ -177,7 +193,7 @@ function confirmExploreLaunch() {
   if (useGlobalChoice.value) {
     setDisplayModePreference('engine', rememberChoice.value)
   } else {
-    setDisplayModePreference('dom', rememberChoice.value)
+    setDisplayModePreference(displayModePreference.value, rememberChoice.value)
   }
 
   saveProgress()
