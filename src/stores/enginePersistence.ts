@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { GAME_CONFIG } from '@/engine/config'
+import type { RenderBackendKind } from '@/engine/render/backend/shared/runtime/RenderBackendCapabilities'
 import type { EngineRuntimeMutableConfig } from '@/config/runtime'
 import type { PlayerPerspectiveMode } from '@/engine/world/game/PlayerRig'
 import { isLikelyMobileDevice } from '@/utils/platformCapabilities'
@@ -9,6 +10,7 @@ const STORAGE_KEY = 'world-engine-persistence'
 const MOBILE_DEFAULT_LOAD_DISTANCE = 8
 
 export type PersistedDisplayMode = 'dom' | 'engine'
+export type PersistedRenderBackendPreference = RenderBackendKind
 
 type PersistedHomeExplorePose = {
   position: [number, number, number]
@@ -21,10 +23,31 @@ type PersistedEngineState = {
   homeExplorePose: PersistedHomeExplorePose | null
   displayModePreference: PersistedDisplayMode
   hasRememberedDisplayMode?: boolean
+  renderBackendPreference: PersistedRenderBackendPreference
 }
 
 function sanitizeDisplayModePreference(value: unknown): PersistedDisplayMode {
   return value === 'engine' ? 'engine' : 'dom'
+}
+
+function sanitizeRenderBackendPreference(value: unknown): PersistedRenderBackendPreference {
+  if (typeof value !== 'string') {
+    return 'webgl2'
+  }
+
+  const normalizedValue = value.trim().toLowerCase()
+  if (normalizedValue === 'webgpu') {
+    return 'webgpu'
+  }
+
+  const isLegacyShortForm =
+    normalizedValue.length === 4 &&
+    normalizedValue[0] === 'w' &&
+    normalizedValue[1] === 'g' &&
+    normalizedValue[2] === 'p' &&
+    normalizedValue[3] === 'u'
+
+  return isLegacyShortForm ? 'webgpu' : 'webgl2'
 }
 
 function isPerspectiveMode(value: unknown): value is PlayerPerspectiveMode {
@@ -147,6 +170,7 @@ function readPersistedState(): PersistedEngineState {
     homeExplorePose: null,
     displayModePreference: 'dom',
     hasRememberedDisplayMode: false,
+    renderBackendPreference: 'webgl2',
   }
 
   if (typeof window === 'undefined') {
@@ -165,6 +189,7 @@ function readPersistedState(): PersistedEngineState {
       homeExplorePose: sanitizeHomeExplorePose(parsed.homeExplorePose),
       displayModePreference: sanitizeDisplayModePreference(parsed.displayModePreference),
       hasRememberedDisplayMode: !!parsed.hasRememberedDisplayMode,
+      renderBackendPreference: sanitizeRenderBackendPreference(parsed.renderBackendPreference),
     }
   } catch (error) {
     console.warn('Engine persistence store: failed to read persisted state', error)
@@ -178,6 +203,9 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
   const homeExplorePose = ref<PersistedHomeExplorePose | null>(persisted.homeExplorePose)
   const displayModePreference = ref<PersistedDisplayMode>(persisted.displayModePreference)
   const hasRememberedDisplayMode = ref<boolean>(persisted.hasRememberedDisplayMode ?? false)
+  const renderBackendPreference = ref<PersistedRenderBackendPreference>(
+    persisted.renderBackendPreference,
+  )
 
   function persistState() {
     if (typeof window === 'undefined') {
@@ -194,6 +222,7 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
             ? displayModePreference.value
             : 'dom',
           hasRememberedDisplayMode: hasRememberedDisplayMode.value,
+          renderBackendPreference: renderBackendPreference.value,
         } satisfies PersistedEngineState),
       )
     } catch (error) {
@@ -222,9 +251,19 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
     hasRememberedDisplayMode.value = value
   }
 
+  function setRenderBackendPreference(value: PersistedRenderBackendPreference) {
+    renderBackendPreference.value = sanitizeRenderBackendPreference(value)
+  }
+
   if (typeof window !== 'undefined') {
     watch(
-      [runtimeConfig, homeExplorePose, displayModePreference, hasRememberedDisplayMode],
+      [
+        runtimeConfig,
+        homeExplorePose,
+        displayModePreference,
+        hasRememberedDisplayMode,
+        renderBackendPreference,
+      ],
       persistState,
       {
         deep: true,
@@ -238,10 +277,12 @@ export const useEnginePersistenceStore = defineStore('enginePersistence', () => 
     homeExplorePose: computed(() => homeExplorePose.value),
     displayModePreference: computed(() => displayModePreference.value),
     hasRememberedDisplayMode: computed(() => hasRememberedDisplayMode.value),
+    renderBackendPreference: computed(() => renderBackendPreference.value),
     setRuntimeConfig,
     setHomeExplorePose,
     clearHomeExplorePose,
     setDisplayModePreference,
     setHasRememberedDisplayMode,
+    setRenderBackendPreference,
   }
 })

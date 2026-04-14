@@ -1,6 +1,7 @@
 import type { EngineRuntimeLightingConfig, EngineRuntimeMutableConfig } from '@/config/runtime'
 import type { ResourceDefinition } from '@/engine/config'
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { RenderBackendKind } from '@/engine/render/backend/shared/runtime/RenderBackendCapabilities'
+import type { CharacterModelType } from '@/engine/world/entity/character/modelType'
 import type { EngineCameraPose } from '../camera/useCameraController'
 
 export type EnginePlayerSkinOverride = {
@@ -14,6 +15,7 @@ export type EngineSessionSetupOptions = {
   worldBasePath?: string
   regionUrlResolver?: (regionX: number, regionZ: number) => string
   playerSkin?: EnginePlayerSkinOverride
+  renderBackend?: RenderBackendKind
 }
 
 type EngineSetupState = {
@@ -64,10 +66,16 @@ export function useSessionLifecycle(options: UseSessionLifecycleOptions) {
   let activeSetupState: EngineSetupState | null = null
   let refreshSessionPromise: Promise<boolean> | null = null
   let unsubscribeRuntimeConfig: (() => void) | null = null
+  let chunkRuntimeActive = false
+
+  function shouldInitializeChunkRuntime(setupOptions: EngineSessionSetupOptions) {
+    return (setupOptions.renderBackend ?? 'webgl2') === 'webgl2'
+  }
 
   function refreshEngineSession(
     resourceOverride?: ResourceDefinition,
     setupOptionsOverride: Partial<EngineSessionSetupOptions> = {},
+    canvasOverride?: HTMLCanvasElement,
   ) {
     const setupState = activeSetupState
     if (!setupState) {
@@ -75,11 +83,12 @@ export function useSessionLifecycle(options: UseSessionLifecycleOptions) {
     }
 
     const runRefresh = async () => {
-      const nextCanvas = setupState.canvas
+      const nextCanvas = canvasOverride ?? setupState.canvas
       const nextResource = resourceOverride ?? setupState.resource
       const nextPose = options.captureCameraPose()
       const shouldEnableCanvasInput = options.getCanvasInputEnabled()
       const shouldEnableWorldInteraction = options.getWorldInteractionEnabled()
+      const hadChunkRuntime = chunkRuntimeActive
       const resourceChanged =
         resourceOverride !== undefined &&
         options.getResourceSignature(nextResource) !==
@@ -104,35 +113,51 @@ export function useSessionLifecycle(options: UseSessionLifecycleOptions) {
       options.setCanvasInputEnabled(shouldEnableCanvasInput)
       options.setWorldInteractionEnabled(shouldEnableWorldInteraction)
 
+      const nextShouldInitializeChunkRuntime = shouldInitializeChunkRuntime(
+        activeSetupState.options,
+      )
+      if (!nextShouldInitializeChunkRuntime && hadChunkRuntime) {
+        options.clearChunkManager()
+        chunkRuntimeActive = false
+      }
+
       await options.initializeRenderSession(nextCanvas, nextResource, activeSetupState.options)
       options.applyWorldSourceConfig(activeSetupState.options)
 
-      let workerReadyHandled = false
-      options.bindChunkRuntimeCallbacks(() => {
-        if (workerReadyHandled) {
-          return
+      if (nextShouldInitializeChunkRuntime) {
+        let workerReadyHandled = false
+        options.bindChunkRuntimeCallbacks(() => {
+          if (workerReadyHandled) {
+            return
+          }
+
+          workerReadyHandled = true
+          options.setDebugStatus('Worker ready')
+          options.setWorkerReady(true)
+          options.remeshLoadedChunks()
+          options.beginChunkWarmup()
+          options.requestChunkRefreshNow()
+        })
+
+        if (resourceChanged || !hadChunkRuntime) {
+          await options.initializeChunkManager(nextResource)
+        } else {
+          options.applyRuntimeMesherOptions()
+          options.setWorkerReady(true)
+          options.remeshLoadedChunks()
+          options.beginChunkWarmup()
+          options.requestChunkRefreshNow()
         }
 
-        workerReadyHandled = true
-        options.setDebugStatus('Worker ready')
-        options.setWorkerReady(true)
-        options.remeshLoadedChunks()
-        options.beginChunkWarmup()
-        options.requestChunkRefreshNow()
-      })
+        if (options.getWorldInteractionEnabled()) {
+          options.initializeBlockInteraction(nextCanvas)
+        }
 
-      if (resourceChanged) {
-        await options.initializeChunkManager(nextResource)
+        chunkRuntimeActive = true
       } else {
-        options.applyRuntimeMesherOptions()
         options.setWorkerReady(true)
-        options.remeshLoadedChunks()
-        options.beginChunkWarmup()
-        options.requestChunkRefreshNow()
-      }
-
-      if (options.getWorldInteractionEnabled()) {
-        options.initializeBlockInteraction(nextCanvas)
+        options.clearChunkManager()
+        chunkRuntimeActive = false
       }
 
       options.setDebugStatus('Running')
@@ -182,20 +207,29 @@ export function useSessionLifecycle(options: UseSessionLifecycleOptions) {
         options.onRuntimeConfigSnapshot(nextConfig)
       })
 
+      const shouldBootChunkRuntime = shouldInitializeChunkRuntime(activeSetupState.options)
       await options.initializeRenderSession(canvas, resource, activeSetupState.options)
       options.applyWorldSourceConfig(setupOptions)
-      options.bindChunkRuntimeCallbacks(() => {
-        options.setDebugStatus('Worker ready')
-        options.setWorkerReady(true)
+      if (shouldBootChunkRuntime) {
+        options.bindChunkRuntimeCallbacks(() => {
+          options.setDebugStatus('Worker ready')
+          options.setWorkerReady(true)
+          options.beginChunkWarmup()
+          options.requestChunkRefreshNow()
+        })
+
+        await options.initializeChunkManager(resource)
         options.beginChunkWarmup()
         options.requestChunkRefreshNow()
-      })
+        if (options.getWorldInteractionEnabled()) {
+          options.initializeBlockInteraction(canvas)
+        }
 
-      await options.initializeChunkManager(resource)
-      options.beginChunkWarmup()
-      options.requestChunkRefreshNow()
-      if (options.getWorldInteractionEnabled()) {
-        options.initializeBlockInteraction(canvas)
+        chunkRuntimeActive = true
+      } else {
+        options.setWorkerReady(true)
+        options.clearChunkManager()
+        chunkRuntimeActive = false
       }
 
       options.setDebugStatus('Running')
@@ -217,6 +251,7 @@ export function useSessionLifecycle(options: UseSessionLifecycleOptions) {
     options.setCanvasInputEnabled(options.initialCanvasInputEnabled)
     options.setWorldInteractionEnabled(options.initialWorldInteractionEnabled)
     options.clearChunkManager()
+    chunkRuntimeActive = false
     options.setWorkerReady(false)
     console.log('[useEngine] Engine state disposed, workers preserved.')
   }

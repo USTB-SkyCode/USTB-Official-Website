@@ -1,8 +1,8 @@
 import { ref, readonly } from 'vue'
 import type { TakeoverSurfaceLayer } from '@/constants/takeoverSurface'
-import { createLiquidGlassComponent } from '@/engine/render/ui3d/LiquidGlassComponent'
+import type { EngineUi3dComponent } from '@/engine/render/EngineRenderer'
+import { createLiquidGlassComponent } from '@/engine/render/backend/webgl2/ui3d/LiquidGlassComponent'
 import { useTakeoverLiquidGlassEditor } from '@/hooks/core/takeover/useTakeoverLiquidGlassEditor'
-import type { Ui3dComponentInstance } from '@/engine/render/ui3d/Ui3dComponent'
 import type { TakeoverSurfaceRenderAdapterInstance } from '@/engine/takeover/TakeoverSurfaceRenderAdapter'
 
 type TakeoverSurfaceUi3dStagingInput = {
@@ -24,7 +24,7 @@ export type TakeoverSurfaceUi3dStagingState = {
   surfaceKeys: readonly string[]
   surfaceLayers: readonly TakeoverSurfaceLayer[]
   layerCounts: Record<TakeoverSurfaceLayer, number>
-  components: readonly Ui3dComponentInstance[]
+  components: readonly EngineUi3dComponent[]
 }
 
 const EMPTY_LAYER_COUNTS: Record<TakeoverSurfaceLayer, number> = {

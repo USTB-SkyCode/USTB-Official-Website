@@ -1,4 +1,4 @@
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from './modelType'
 import {
   Character,
   type CharacterCalibrationDebugInfo,

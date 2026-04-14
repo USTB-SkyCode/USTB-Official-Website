@@ -1,5 +1,5 @@
 import { shallowRef, onUnmounted } from 'vue'
-import type { Renderer } from '@/engine/render/Renderer'
+import type { EngineRenderer, EngineRendererKind } from '@/engine/render/EngineRenderer'
 
 /**
  * @file useRenderer.ts
@@ -7,14 +7,14 @@ import type { Renderer } from '@/engine/render/Renderer'
  * @description 负责 Renderer 实例的生命周期管理，以及 Canvas 尺寸调整。
  */
 export function useRenderer() {
-  const renderer = shallowRef<Renderer | null>(null)
+  const renderer = shallowRef<EngineRenderer | null>(null)
   const canvasRef = shallowRef<HTMLCanvasElement | null>(null)
   let initToken = 0
 
   /**
    * 初始化渲染器
    */
-  async function init(canvas: HTMLCanvasElement) {
+  async function init(canvas: HTMLCanvasElement, kind: EngineRendererKind = 'webgl2') {
     const token = ++initToken
     canvasRef.value = canvas
 
@@ -22,13 +22,24 @@ export function useRenderer() {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    const { Renderer: RendererClass } = await import('@/engine/render/Renderer')
+    let nextRenderer: EngineRenderer
+
+    if (kind === 'webgpu') {
+      const { WebGPURenderer } = await import(
+        '@/engine/render/backend/webgpu/device/WebGPURenderer'
+      )
+      nextRenderer = await WebGPURenderer.create(canvas)
+    } else {
+      const { Renderer: RendererClass } = await import('@/engine/render/Renderer')
+      nextRenderer = new RendererClass(canvas) as EngineRenderer
+    }
 
     if (token !== initToken || canvasRef.value !== canvas) {
+      nextRenderer.dispose()
       return
     }
 
-    renderer.value = new RendererClass(canvas)
+    renderer.value = nextRenderer
 
     // 监听 Resize
     window.addEventListener('resize', handleResize)

@@ -9,6 +9,40 @@
     </header>
 
     <section class="engine-settings-group">
+      <div class="engine-settings-group__title">Backend</div>
+
+      <label class="engine-setting-row">
+        <div class="engine-setting-row__label">
+          <span>Renderer Backend</span>
+          <span
+            class="engine-setting-tooltip-anchor"
+            tabindex="0"
+            title="切换后端会刷新当前引擎 session；不会整页刷新。当前 WebGPU 只保留浏览器原生设备、宿主和后端切换缝合点，作为 bootstrap shell 存在。"
+          >
+            ?
+            <span class="engine-setting-tooltip">渲染后端</span>
+          </span>
+        </div>
+        <div class="engine-setting-row__control engine-setting-row__control--stacked">
+          <div class="engine-setting-select-shell">
+            <select
+              class="engine-setting-select"
+              :value="renderBackendPreference"
+              @change="onRenderBackendChange"
+            >
+              <option value="webgl2">WebGL2 · current full runtime</option>
+              <option value="webgpu" :disabled="!webgpuCapability.browserSupported">
+                WebGPU · bootstrap shell only
+              </option>
+            </select>
+            <span class="engine-setting-select-shell__icon" aria-hidden="true"></span>
+          </div>
+          <span class="engine-setting-hint">{{ renderBackendHint }}</span>
+        </div>
+      </label>
+    </section>
+
+    <section class="engine-settings-group">
       <div class="engine-settings-group__title">Resource</div>
 
       <label class="engine-setting-row">
@@ -276,9 +310,11 @@ import {
   subscribeEngineRuntimeConfig,
   type EngineRuntimeConfigPatch,
 } from '@/config/runtime'
+import { getRenderBackendCapabilitySnapshot } from '@/engine/render/backend/shared/runtime/RenderBackendCapabilities'
 import { classifyRuntimeConfigPatch } from '@/engine/runtime/EngineRuntimeConfigApplier'
 import { applyEngineRuntimeConfigThroughHost } from '@/engine/runtime/EngineRuntimeConfigHostBridge'
 import { useSceneController } from '@/composables/scene/useSceneController'
+import { useEnginePersistenceStore } from '@/stores/enginePersistence'
 import { useResourceStore } from '@/stores/resource'
 
 const props = withDefaults(
@@ -297,8 +333,10 @@ defineEmits<{
 }>()
 
 const { hostRuntimeReady } = useSceneController()
+const enginePersistenceStore = useEnginePersistenceStore()
 const resourceStore = useResourceStore()
 const runtimeConfig = ref(getEngineRuntimeConfig())
+const renderBackendCapabilitySnapshot = getRenderBackendCapabilitySnapshot()
 
 const unsubscribeRuntimeConfig = subscribeEngineRuntimeConfig(nextConfig => {
   runtimeConfig.value = nextConfig
@@ -311,6 +349,25 @@ onBeforeUnmount(() => {
 const title = computed(() => props.title)
 const kicker = computed(() => props.kicker)
 const activeResourceLabel = computed(() => resourceStore.activeResource.label)
+const renderBackendPreference = computed(() => enginePersistenceStore.renderBackendPreference)
+const webgpuCapability = renderBackendCapabilitySnapshot.webgpu
+const selectedRenderBackendCapability = computed(
+  () => renderBackendCapabilitySnapshot[renderBackendPreference.value],
+)
+const renderBackendHint = computed(() => {
+  const capability = selectedRenderBackendCapability.value
+  const hostStateLabel = hostRuntimeReady.value ? 'host ready' : 'host booting'
+
+  if (!capability.browserSupported) {
+    return `${capability.kind.toUpperCase()} unavailable in this browser`
+  }
+
+  if (capability.kind === 'webgpu') {
+    return `WebGPU · bootstrap shell only · ${hostStateLabel}`
+  }
+
+  return `WebGL2 · current full runtime · ${hostStateLabel}`
+})
 
 function applyRuntimeSettingsPatch(patch: EngineRuntimeConfigPatch) {
   const result = applyEngineRuntimeConfigThroughHost(patch)
@@ -384,6 +441,20 @@ function onResourcePackChange(event: Event) {
   }
 
   resourceStore.setResource(target.value)
+}
+
+function onRenderBackendChange(event: Event) {
+  const target = event.target
+  if (!(target instanceof HTMLSelectElement)) {
+    return
+  }
+
+  const nextBackend = target.value === 'webgpu' ? 'webgpu' : 'webgl2'
+  if (nextBackend === renderBackendPreference.value) {
+    return
+  }
+
+  enginePersistenceStore.setRenderBackendPreference(nextBackend)
 }
 
 function togglePointLights() {

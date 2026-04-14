@@ -1,6 +1,6 @@
 import { mat4, vec3, degToRad } from '@/engine/render/utils/math'
 import { GAME_CONFIG } from '@/engine/config'
-import type { Camera } from '@/engine/render/core/scene/Camera'
+import type { Camera } from '@/engine/render/scene/camera/Camera'
 
 /**
  * @file CSMCalculator.ts

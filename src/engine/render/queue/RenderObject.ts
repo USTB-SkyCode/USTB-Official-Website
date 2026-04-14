@@ -1,5 +1,5 @@
-import type { GeometryHandle } from '../backend/GeometryHandle'
-import type { ShaderFamily } from '../backend/PipelineKey'
+import type { GeometryHandle } from '../backend/shared/contracts/GeometryHandle'
+import type { ShaderFamily } from '../backend/shared/contracts/PipelineKey'
 import type { RenderDomain } from '../layout/VertexLayoutDescriptor'
 
 export type ScreenEffectDomain = 'ui3d' | 'debug'

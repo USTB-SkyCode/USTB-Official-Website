@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from '@/engine/config'
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from './modelType'
 import { normalizeCharacterModelType } from '@/utils/characterSkinModel'
 
 export type CharacterSkinDefinition = {

@@ -88,7 +88,7 @@ export interface PayloadSpan {
   byteLength: number
 }
 
-// 供主线程 terrain/runtime 在需要时按 span 解析字节视图。
+// 供主线程 WebGL2 terrain compatibility runtime 在需要时按 span 解析字节视图。
 export interface ChunkArtifactPayloadResolver {
   resolve(span: PayloadSpan | null | undefined): Uint8Array | null
 }

@@ -2,16 +2,16 @@ import { computed, ref } from 'vue'
 import type {
   LiquidGlassControlDefinition,
   LiquidGlassEffectSettings,
-} from '@/engine/render/ui3d/LiquidGlassEffectSettings'
+} from '@/engine/render/backend/webgl2/ui3d/LiquidGlassEffectSettings'
 import {
   createDefaultLiquidGlassEffectSettings,
   LIQUID_GLASS_CONTROL_SECTIONS,
-} from '@/engine/render/ui3d/LiquidGlassEffectSettings'
-import type { LiquidGlassInstanceSettings } from '@/engine/render/ui3d/LiquidGlassInstanceSettings'
+} from '@/engine/render/backend/webgl2/ui3d/LiquidGlassEffectSettings'
+import type { LiquidGlassInstanceSettings } from '@/engine/render/backend/webgl2/ui3d/LiquidGlassInstanceSettings'
 import {
   createDefaultLiquidGlassInstanceSettings,
   LIQUID_GLASS_INSTANCE_CONTROL_SECTIONS,
-} from '@/engine/render/ui3d/LiquidGlassInstanceSettings'
+} from '@/engine/render/backend/webgl2/ui3d/LiquidGlassInstanceSettings'
 import type { TakeoverSurfaceLayer } from '@/constants/takeoverSurface'
 
 export type TakeoverLiquidGlassSelection = {

@@ -21,7 +21,8 @@ async function readFetchErrorSummary(response: Response): Promise<string> {
 }
 
 function withCacheBust(url: string): string {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://dev-app.example.test'
+  const base =
+    typeof window !== 'undefined' ? window.location.origin : 'https://dev-app.example.test'
   const resolved = new URL(url, base)
   resolved.searchParams.set('mca_retry', Date.now().toString())
   return resolved.pathname + resolved.search
@@ -57,7 +58,9 @@ async function fetchRegionBuffer(url: string): Promise<ArrayBuffer> {
 
   const errorSummary = await readFetchErrorSummary(response)
   const errorDetails = errorSummary ? ` - ${errorSummary}` : ''
-  throw new Error(`Region fetch failed for ${url}: ${response.status} ${response.statusText}${errorDetails}`)
+  throw new Error(
+    `Region fetch failed for ${url}: ${response.status} ${response.statusText}${errorDetails}`,
+  )
 }
 
 /**

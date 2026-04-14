@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { Ui3dComponentInstance } from '@/engine/render/ui3d/Ui3dComponent'
+import type { EngineUi3dComponent } from '@/engine/render/EngineRenderer'
 import { useTakeoverSurfaceConsumer } from '@/engine/takeover/TakeoverSurfaceConsumer'
 import { useTakeoverSurfaceRenderAdapter } from '@/engine/takeover/TakeoverSurfaceRenderAdapter'
 import { useTakeoverSurfaceUi3dStaging } from '@/engine/takeover/TakeoverSurfaceUi3dStaging'
@@ -24,7 +24,7 @@ type UseTakeoverOptions = {
   enableTakeoverUi3dSubmit: boolean
   resolveRenderer: () => {
     setUi3dTransparentBackground: (enabled: boolean) => void
-    setUi3dComponents: (components: readonly Ui3dComponentInstance[]) => void
+    setUi3dComponents: (components: readonly EngineUi3dComponent[]) => void
   } | null
 }
 

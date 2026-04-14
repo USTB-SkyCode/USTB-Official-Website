@@ -15,23 +15,24 @@ import {
   classifyRuntimeConfigPatch,
   type EngineRuntimeConfigApplyResult,
 } from '@/engine/runtime/EngineRuntimeConfigApplier'
+import type { ChunkArtifactPayloadArenaReleaseHandle } from '@/engine/world/chunk/domain'
+import type { IRenderBackend } from '@/engine/render/backend/shared/contracts/IRenderBackend'
+import type { CharacterRenderBridgePort } from '@/engine/render/entity/runtime/character/types'
 
 // Managers
-import type { TextureManager } from '@/engine/render/texture/TextureManager'
-import type { WebGL2RenderBackend } from '@/engine/render/backend/webgl2/WebGL2RenderBackend'
-import type { ChunkArtifactRenderBridge } from '@/engine/render/terrain/runtime/ChunkArtifactRenderBridge'
-import type { CharacterRenderBridge } from '@/engine/render/entity/character/CharacterRenderBridge'
+import type { TextureManager } from '@/engine/render/backend/webgl2/texture/TextureManager'
+import type { ChunkArtifactRenderBridge } from '@/engine/render/backend/webgl2/terrain/runtime/ChunkArtifactRenderBridge'
 import { RenderQueueBuilder } from '@/engine/render/queue/RenderQueueBuilder'
 
 import type { Player } from '@/engine/world/entity/character/Player'
 import type { FirstPersonHand } from '@/engine/world/entity/character/firstPerson/FirstPersonHand'
 import { CHARACTER_LOCAL_HEIGHT } from '@/engine/world/entity/character/Character'
 import { DayNightCycle } from '@/engine/world/game/DayNightCycle'
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from '@/engine/world/entity/character/modelType'
 import {
   getCharacterBodyGroupId,
   getCharacterBodyGroupObjectId,
-} from '@/engine/render/entity/character/CharacterRenderGroups'
+} from '@/engine/world/entity/character/renderGroups'
 import { CSMCalculator } from '@/engine/render/core/lighting/CSMCalculator'
 import { TextureLoader } from '@/engine/render/texture/TextureLoader'
 
@@ -56,7 +57,10 @@ import {
   type EngineTakeoverUi3dSubmissionState as InternalEngineTakeoverUi3dSubmissionState,
 } from './core/takeover/useTakeover'
 import { useFrameRuntime } from './core/frame/useFrameRuntime'
-import { loadRenderSessionModules } from './core/session/useRenderSessionModules'
+import {
+  loadRenderSessionModules,
+  type RenderSessionBackendKind,
+} from './core/session/useRenderSessionModules'
 import { useSessionLifecycle } from './core/session/useSessionLifecycle'
 import { usePerformanceStats } from './core/frame/usePerformanceStats'
 import { useChunkLoader } from './core/world/useChunkLoader' // 复用现有的 ChunkLoader Hook
@@ -101,6 +105,7 @@ export type UseEngineSetupOptions = {
   worldBasePath?: string
   regionUrlResolver?: (regionX: number, regionZ: number) => string
   playerSkin?: EnginePlayerSkinOverride
+  renderBackend?: RenderSessionBackendKind
 }
 
 export type ApplyEngineRuntimeConfigResult = EngineRuntimeConfigApplyResult
@@ -237,9 +242,9 @@ export function useEngine(options: UseEngineOptions = {}) {
   const firstPersonHandRotation = ref({ ...GAME_CONFIG.WORLD.PLAYER.FIRST_PERSON_HAND_ROTATION })
   const firstPersonHandAnimation = useFirstPersonHandAnimation()
   let textureManager: TextureManager | null = null
-  let renderBackend: WebGL2RenderBackend | null = null
+  let renderBackend: IRenderBackend | null = null
   let artifactRenderBridge: ChunkArtifactRenderBridge | null = null
-  let characterRenderBridge: CharacterRenderBridge | null = null
+  let characterRenderBridge: CharacterRenderBridgePort | null = null
   let player: Player | null = null
   let firstPersonHand: FirstPersonHand | null = null
   let interactiveCanvas: HTMLCanvasElement | null = null
@@ -354,7 +359,9 @@ export function useEngine(options: UseEngineOptions = {}) {
     resource: ResourceDefinition,
     setupOptions: UseEngineSetupOptions,
   ) {
-    await initRenderer(canvas)
+    const selectedRenderBackend = setupOptions.renderBackend ?? 'webgl2'
+
+    await initRenderer(canvas, selectedRenderBackend)
     if (!renderer.value) {
       throw new Error('Failed to init renderer')
     }
@@ -363,42 +370,104 @@ export function useEngine(options: UseEngineOptions = {}) {
 
     const debugWindow = window as EngineDebugWindow
     debugWindow.captureFrameDebug = () => {
+      if (renderer.value?.kind !== 'webgl2') {
+        console.warn('[useEngine] Frame debug capture is only implemented for WebGL2 sessions')
+        return
+      }
+
       renderer.value?.captureDebugSnapshots()
     }
 
-    const gl = renderer.value.canvas.getContext('webgl2')!
-    initGpuTimer(gl)
+    if (renderer.value.kind === 'webgl2') {
+      const gl = renderer.value.canvas.getContext('webgl2')
+      if (!gl) {
+        throw new Error('Failed to acquire WebGL2 context for WebGL2 render session')
+      }
+
+      initGpuTimer(gl)
+    }
+
+    const sessionModules = await loadRenderSessionModules(selectedRenderBackend)
+
     const {
-      TextureManager: TextureManagerClass,
-      WebGL2RenderBackend: WebGL2RenderBackendClass,
-      ChunkArtifactRenderBridge: ChunkArtifactRenderBridgeClass,
-      WebGL2TerrainResidentUploadExecutionBackend: WebGL2TerrainResidentUploadExecutionBackendClass,
-      TerrainClusterArena: TerrainClusterArenaClass,
-      CharacterRenderBridge: CharacterRenderBridgeClass,
       Player: PlayerClass,
       FirstPersonHand: FirstPersonHandClass,
       resolveCharacterSkinById,
-      mainThreadBlockStateBridge,
-      layouts,
-    } = await loadRenderSessionModules()
+    } = sessionModules
 
-    renderBackend = new WebGL2RenderBackendClass(gl)
-    const clusterArena = new TerrainClusterArenaClass()
-    const terrainExecutionBackend = new WebGL2TerrainResidentUploadExecutionBackendClass(
-      gl,
-      clusterArena,
-    )
-    artifactRenderBridge = new ChunkArtifactRenderBridgeClass(
-      renderBackend,
-      clusterArena,
-      terrainExecutionBackend,
-      handles => chunkManager.releasePayloadArenas(handles),
-    )
-    renderBackend.registerLayout(layouts.TERRAIN_COMPACT_LAYOUT)
-    renderBackend.registerLayout(layouts.MODEL_STANDARD_LAYOUT)
-    renderBackend.registerLayout(layouts.MODEL_STANDARD_INSTANCED_LAYOUT)
+    if (sessionModules.kind === 'webgl2') {
+      const {
+        TextureManager: TextureManagerClass,
+        WebGL2RenderBackend: WebGL2RenderBackendClass,
+        ChunkArtifactRenderBridge: ChunkArtifactRenderBridgeClass,
+        WebGL2TerrainResidentUploadExecutionBackend:
+          WebGL2TerrainResidentUploadExecutionBackendClass,
+        TerrainClusterArena: TerrainClusterArenaClass,
+        mainThreadBlockStateBridge,
+        layouts,
+      } = sessionModules
 
-    characterRenderBridge = new CharacterRenderBridgeClass(renderBackend)
+      const gl = renderer.value.canvas.getContext('webgl2')
+      if (!gl) {
+        throw new Error('WebGL2 render session requested without a WebGL2 canvas context')
+      }
+
+      const webgl2RenderBackend = new WebGL2RenderBackendClass(gl)
+      renderBackend = webgl2RenderBackend
+      const clusterArena = new TerrainClusterArenaClass()
+      const terrainExecutionBackend = new WebGL2TerrainResidentUploadExecutionBackendClass(
+        gl,
+        clusterArena,
+      )
+      artifactRenderBridge = new ChunkArtifactRenderBridgeClass(
+        webgl2RenderBackend,
+        clusterArena,
+        terrainExecutionBackend,
+        (handles: readonly ChunkArtifactPayloadArenaReleaseHandle[]) =>
+          chunkManager.releasePayloadArenas(handles),
+      )
+      webgl2RenderBackend.registerLayout(layouts.TERRAIN_COMPACT_LAYOUT)
+      webgl2RenderBackend.registerLayout(layouts.MODEL_STANDARD_LAYOUT)
+      webgl2RenderBackend.registerLayout(layouts.MODEL_STANDARD_INSTANCED_LAYOUT)
+
+      const nextCharacterRenderBridge =
+        sessionModules.createCharacterRenderBridge(webgl2RenderBackend)
+      characterRenderBridge = nextCharacterRenderBridge
+
+      interactiveCanvas = canvas
+      if (canvasInputEnabled.value) {
+        attachInput(canvas)
+      }
+
+      const nextTextureManager = new TextureManagerClass(gl)
+      textureManager = nextTextureManager
+      debugStatus.value = 'Loading resources...'
+      await nextTextureManager.loadTextures(resource)
+
+      const resourceEndpoints = resolveResourceEndpoints(resource)
+      const variantLutUrl = resourceEndpoints.variantLutUrl
+      console.log('[useEngine] Loading Variant LUT from:', variantLutUrl)
+      await nextTextureManager.loadVariantLUT(variantLutUrl)
+
+      await mainThreadBlockStateBridge.init(resource, chunkManager.sabManager.sab)
+      chunkManager.setLightingConfig(sessionLightingConfig)
+    } else {
+      renderBackend = null
+      artifactRenderBridge = null
+      characterRenderBridge = sessionModules.createCharacterRenderBridge(null)
+
+      interactiveCanvas = canvas
+      if (canvasInputEnabled.value) {
+        attachInput(canvas)
+      }
+    }
+
+    const nextCharacterRenderBridge = characterRenderBridge
+    if (!nextCharacterRenderBridge) {
+      throw new Error('Failed to initialize character render bridge')
+    }
+
+    characterRenderBridge = nextCharacterRenderBridge
     const fallbackPlayerSkin = resolveCharacterSkinById(GAME_CONFIG.WORLD.PLAYER.SKIN_ID)
     const playerSkin = setupOptions.playerSkin
       ? setupOptions.playerSkin
@@ -407,14 +476,15 @@ export function useEngine(options: UseEngineOptions = {}) {
           skinUrl: fallbackPlayerSkin.url,
           modelType: fallbackPlayerSkin.modelType ?? ('normal' as const),
         }
-    player = new PlayerClass({
+    const nextPlayer = new PlayerClass({
       skinId: playerSkin.skinId,
       skinUrl: playerSkin.skinUrl,
       modelType: playerSkin.modelType,
       modelScale: characterModelScale,
       modelMountOffsetY: GAME_CONFIG.WORLD.PLAYER.MODEL_MOUNT_OFFSET_Y,
     })
-    firstPersonHand = new FirstPersonHandClass({
+    player = nextPlayer
+    const nextFirstPersonHand = new FirstPersonHandClass({
       skinId: playerSkin.skinId,
       skinUrl: playerSkin.skinUrl,
       modelType: playerSkin.modelType,
@@ -422,53 +492,41 @@ export function useEngine(options: UseEngineOptions = {}) {
       cameraLocalOffset: firstPersonHandOffset.value,
       cameraLocalRotation: firstPersonHandRotation.value,
     })
-    player.initializeFromAnchor({
+    firstPersonHand = nextFirstPersonHand
+    nextPlayer.initializeFromAnchor({
       anchorPosition: motionAnchorPosition,
       anchorLookTarget: motionAnchorLookTarget,
     })
-    firstPersonHand.initializeFromCamera({
+    nextFirstPersonHand.initializeFromCamera({
       cameraPosition: renderCameraEyePosition,
       cameraLookTarget: renderCameraEyeLookTarget,
     })
 
-    await characterRenderBridge.upsertGroup(
+    await nextCharacterRenderBridge.upsertGroup(
       {
-        groupId: getCharacterBodyGroupId(player.getDefinition().modelType ?? 'normal'),
-        objectId: getCharacterBodyGroupObjectId(player.getDefinition().modelType ?? 'normal'),
-        definition: player.getDefinition(),
+        groupId: getCharacterBodyGroupId(nextPlayer.getDefinition().modelType ?? 'normal'),
+        objectId: getCharacterBodyGroupObjectId(nextPlayer.getDefinition().modelType ?? 'normal'),
+        definition: nextPlayer.getDefinition(),
         mode: 'instanced',
-        modelType: player.getDefinition().modelType,
+        modelType: nextPlayer.getDefinition().modelType,
       },
-      [player.getRenderState()],
+      [nextPlayer.getRenderState()],
     )
-    await characterRenderBridge.upsertGroup(
+    await nextCharacterRenderBridge.upsertGroup(
       {
         groupId: 'player-hand',
-        objectId: firstPersonHand.getDefinition().id,
-        definition: firstPersonHand.getDefinition(),
+        objectId: nextFirstPersonHand.getDefinition().id,
+        definition: nextFirstPersonHand.getDefinition(),
         mode: 'single',
         templateVariant: 'right-arm',
-        modelType: firstPersonHand.getDefinition().modelType,
+        modelType: nextFirstPersonHand.getDefinition().modelType,
       },
-      [firstPersonHand.getRenderState()],
+      [nextFirstPersonHand.getRenderState()],
     )
 
-    interactiveCanvas = canvas
-    if (canvasInputEnabled.value) {
-      attachInput(canvas)
+    if (selectedRenderBackend === 'webgpu') {
+      debugStatus.value = 'Running WebGPU bootstrap shell...'
     }
-
-    textureManager = new TextureManagerClass(gl)
-    debugStatus.value = 'Loading resources...'
-    await textureManager.loadTextures(resource)
-
-    const resourceEndpoints = resolveResourceEndpoints(resource)
-    const variantLutUrl = resourceEndpoints.variantLutUrl
-    console.log('[useEngine] Loading Variant LUT from:', variantLutUrl)
-    await textureManager.loadVariantLUT(variantLutUrl)
-
-    await mainThreadBlockStateBridge.init(resource, chunkManager.sabManager.sab)
-    chunkManager.setLightingConfig(sessionLightingConfig)
   }
 
   function disposeRenderSession() {
@@ -703,6 +761,35 @@ export function useEngine(options: UseEngineOptions = {}) {
     vec3.copy(r.camera.up, cameraUp)
     r.camera.update(aspect)
 
+    if (r.kind === 'webgpu') {
+      const renderStart = performance.now()
+
+      r.render()
+
+      const renderMs = performance.now() - renderStart
+
+      endFrame(frameStart, dt)
+
+      runtimeTelemetry.updateFrameSnapshot({
+        dt,
+        renderMotionAnchorPosition,
+        renderCameraEyePosition,
+        renderCameraViewPosition,
+        dayNightTimeHours: dayNightCycle.clockTimeHours,
+        renderer: r,
+        pendingChunkUploads: 0,
+        artifactVisibleBreakdown: '0/0/0',
+        csmMs: 0,
+        lightsMs: 0,
+        meshUploadMs: 0,
+        cullMs: 0,
+        renderMs,
+        player: null,
+      })
+
+      return
+    }
+
     // 智能适配：基于当前加载距离计算雾效与 CSM 范围
     const loadRadius = sessionChunkLoadDistance * 16
 
@@ -794,20 +881,20 @@ export function useEngine(options: UseEngineOptions = {}) {
     // --- 绘制 (Draw) ---
     const t4 = performance.now()
 
-    r.render(
-      textureManager ? textureManager.getTextureArray() : null,
-      textureManager ? textureManager.getNormalArray() : null,
-      textureManager ? textureManager.getSpecularArray() : null,
-      textureManager ? textureManager.variantLUT : null,
-      csmCalculator.getLightSpaceMatrices(),
-      csmCalculator.getCascadeSplits(),
-      GAME_CONFIG.RENDER.FOG.START, // Use configured Fog Start
-      GAME_CONFIG.RENDER.FOG.END, // Use configured Fog End
-      dayNightCycle.fogColor,
-      renderQueues,
+    r.render({
+      textureArray: textureManager ? textureManager.getTextureArray() : null,
+      normalArray: textureManager ? textureManager.getNormalArray() : null,
+      specularArray: textureManager ? textureManager.getSpecularArray() : null,
+      variantLUT: textureManager ? textureManager.variantLUT : null,
+      lightSpaceMatrices: csmCalculator.getLightSpaceMatrices(),
+      cascadeSplits: csmCalculator.getCascadeSplits(),
+      fogStart: GAME_CONFIG.RENDER.FOG.START,
+      fogEnd: GAME_CONFIG.RENDER.FOG.END,
+      fogColor: dayNightCycle.fogColor,
+      terrainQueues: renderQueues,
       renderBackend,
       selectionOutline,
-    )
+    })
     const t5 = performance.now()
 
     // 帧分解时间
@@ -888,7 +975,8 @@ export function useEngine(options: UseEngineOptions = {}) {
       initializeRenderSession(canvas, resource, setupOptions),
     applyWorldSourceConfig,
     bindChunkRuntimeCallbacks,
-    initializeChunkManager: resource => initChunkManager(textureManager!.getTextureMap(), resource),
+    initializeChunkManager: resource =>
+      initChunkManager(textureManager?.getTextureMap() ?? {}, resource),
     initializeBlockInteraction,
     applyRuntimeMesherOptions: () => {
       chunkManager.applyRuntimeMesherOptions()

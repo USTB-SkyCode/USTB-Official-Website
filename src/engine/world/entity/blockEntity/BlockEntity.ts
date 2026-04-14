@@ -1,5 +1,5 @@
 import { Entity, type EntityDefinition, type EntityOptions } from '../Entity'
-import type { EntityRenderState } from '@/engine/render/entity/types'
+import type { EntityRenderState } from '../renderState'
 
 export type BlockEntityType = 'chest' | 'barrel' | 'furnace' | 'shulker_box' | 'bed' | 'sign'
 

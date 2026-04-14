@@ -1,8 +1,5 @@
-import type { IRenderBackend } from '@/engine/render/backend/IRenderBackend'
-import type { GeometryHandle } from '@/engine/render/backend/GeometryHandle'
 import { TERRAIN_COMPACT_LAYOUT_ID } from '@/engine/render/layout/BuiltinLayouts'
 import type { RenderObject } from '@/engine/render/queue/RenderObject'
-import type { TextureManager } from '@/engine/render/texture/TextureManager'
 import { mat4, quat, vec3 } from '@/engine/render/utils/math'
 import type { Vec3Like } from '../../Entity'
 import type { HeldBlockFaceTextures } from './FirstPersonHeldBlockCatalog'
@@ -12,12 +9,31 @@ const QUAD_INDICES_CCW = [0, 2, 1, 0, 3, 2] as const
 let nextHeldBlockRenderObjectId = 930001
 let nextHeldBlockMaterialId = 930001
 
+type HeldBlockGeometryArtifact = {
+  layoutId: string
+  topology: 'triangles' | 'triangle-strip' | 'lines'
+  vertexBytes: Uint8Array
+  indexBytes?: Uint8Array
+}
+
+type HeldBlockGeometryHandle = RenderObject['geometry']
+
+type HeldBlockRenderBackendPort = {
+  createGeometry(artifact: HeldBlockGeometryArtifact): HeldBlockGeometryHandle
+  releaseGeometry(handle: HeldBlockGeometryHandle): void
+}
+
 type HeldBlockOptions = {
-  backend: IRenderBackend
-  textureManager: TextureManager
+  backend: HeldBlockRenderBackendPort
+  textureAtlas: HeldBlockTextureAtlas
   baseOffset: { x: number; y: number; z: number }
   baseRotation: { pitch: number; yaw: number; roll: number }
   scale: number
+}
+
+type HeldBlockTextureAtlas = {
+  getTextureIndex(textureName: string): number
+  getTextureArray(): WebGLTexture | null
 }
 
 type FaceKey = keyof HeldBlockFaceTextures
@@ -119,7 +135,10 @@ function packUv(u: number, v: number) {
   return (encodedU | (encodedV << 16)) >>> 0
 }
 
-function createHeldBlockGeometry(textures: HeldBlockFaceTextures, textureManager: TextureManager) {
+function createHeldBlockGeometry(
+  textures: HeldBlockFaceTextures,
+  textureAtlas: HeldBlockTextureAtlas,
+) {
   const vertexData = new Uint32Array(CUBE_FACES.length * 4 * 8)
   const indexData = new Uint32Array(CUBE_FACES.length * 6)
   let vertexCursor = 0
@@ -128,7 +147,7 @@ function createHeldBlockGeometry(textures: HeldBlockFaceTextures, textureManager
 
   for (const face of CUBE_FACES) {
     const packedNormal = packNormal(face.normal)
-    const textureIndex = textureManager.getTextureIndex(textures[face.texture]) & 0xffff
+    const textureIndex = textureAtlas.getTextureIndex(textures[face.texture]) & 0xffff
     const packedTexLight = (textureIndex | (255 << 16) | (255 << 24)) >>> 0
     const packedColor = 0xffffffff
     const packedSurface = 0
@@ -183,7 +202,7 @@ export class FirstPersonHeldBlock {
   private readonly animationOffsetDelta = { x: 0, y: 0, z: 0 }
   private readonly animationRotationDelta = { pitch: 0, yaw: 0, roll: 0 }
   private readonly scale: number
-  private geometry: GeometryHandle | null = null
+  private geometry: HeldBlockGeometryHandle | null = null
   private renderObject: RenderObject | null = null
 
   constructor(private readonly options: HeldBlockOptions) {
@@ -202,7 +221,7 @@ export class FirstPersonHeldBlock {
     }
 
     this.geometry = this.options.backend.createGeometry(
-      createHeldBlockGeometry(textures, this.options.textureManager),
+      createHeldBlockGeometry(textures, this.options.textureAtlas),
     )
     this.renderObject = {
       id: nextHeldBlockRenderObjectId++,
@@ -221,7 +240,7 @@ export class FirstPersonHeldBlock {
         shaderTag: 'terrain.deferred',
         shaderFamily: 'opaque',
         resources: {
-          albedoTextureArray2D: this.options.textureManager.getTextureArray(),
+          albedoTextureArray2D: this.options.textureAtlas.getTextureArray(),
         },
         constants: {
           color: new Float32Array([1, 1, 1, 1]),

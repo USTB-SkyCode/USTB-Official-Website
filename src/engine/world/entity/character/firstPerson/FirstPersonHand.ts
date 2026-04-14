@@ -1,5 +1,5 @@
 import { mat4, quat, vec3 } from '@/engine/render/utils/math'
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from '../modelType'
 import { Character, type Vec3Like } from '../Character'
 
 const FIRST_PERSON_HAND_ID = 910002

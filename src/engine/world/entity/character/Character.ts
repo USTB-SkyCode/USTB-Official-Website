@@ -1,4 +1,5 @@
 import { mat4 } from '@/engine/render/utils/math'
+import type { CharacterModelType } from './modelType'
 import {
   Entity,
   clamp,
@@ -7,9 +8,9 @@ import {
   computePitchRadians,
   type Vec3Like,
 } from '../Entity'
-import type { CharacterRenderState } from '@/engine/render/entity/character/types'
+import type { CharacterRenderState } from './renderState'
 
-export type { CharacterRenderState } from '@/engine/render/entity/character/types'
+export type { CharacterRenderState } from './renderState'
 
 export { clamp, copyVec3, transformPoint, computeYawRadians, computePitchRadians } from '../Entity'
 export type { Vec3Like } from '../Entity'
@@ -30,7 +31,7 @@ export type CharacterDefinition = {
   id: number
   skinId: string
   skinUrl: string
-  modelType?: import('@/engine/render/entity/character/CharacterModelSpec').CharacterModelType
+  modelType?: CharacterModelType
 }
 
 export type CharacterOptions = {

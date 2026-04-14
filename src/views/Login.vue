@@ -454,7 +454,8 @@ onBeforeUnmount(() => {
   padding: 24px;
   border: 1px solid color-mix(in srgb, var(--theme-border-strong) 86%, transparent);
   border-radius: 24px;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       180deg,
       color-mix(in srgb, var(--theme-accent-soft) 54%, transparent) 0%,
       transparent 38%
@@ -561,11 +562,8 @@ onBeforeUnmount(() => {
 }
 
 .confirm-button:focus-visible {
-  outline: 2px solid color-mix(
-    in srgb,
-    var(--theme-accent) 72%,
-    var(--theme-surface-glass-strong) 12%
-  );
+  outline: 2px solid
+    color-mix(in srgb, var(--theme-accent) 72%, var(--theme-surface-glass-strong) 12%);
   outline-offset: 2px;
 }
 

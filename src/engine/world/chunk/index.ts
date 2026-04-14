@@ -19,13 +19,16 @@ export * from './memory/LightCache'
 export * from './memory/Layout'
 
 // 工作线程计算与调度
-export * from './compute/pool'
+export * from './compute/pool/WorkerPool'
+export * from './compute/pool/MessageRouter'
 
 // 领域类型与消息协议
 export * from './domain'
 
 // 区域文件读取与缓存
-export * from './io'
+export * from './io/RegionManager'
+export * from './io/RegionCache'
+export * from './io/RegionParser'
 
 // 通用工具
-export * from './utils'
+export * from './utils/ChunkKeyUtils'

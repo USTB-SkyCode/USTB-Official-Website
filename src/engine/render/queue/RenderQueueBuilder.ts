@@ -1,6 +1,10 @@
-import type { RenderQueue, RenderBucket } from '../backend/IRenderBackend'
-import { isPipelineKeyAdmitted } from '../backend/PipelineContracts'
-import { pipelineKeyToString, type PipelineKey, type ShaderFamily } from '../backend/PipelineKey'
+import type { RenderQueue, RenderBucket } from '../backend/shared/contracts/IRenderBackend'
+import { isPipelineKeyAdmitted } from '../backend/shared/contracts/PipelineContracts'
+import {
+  pipelineKeyToString,
+  type PipelineKey,
+  type ShaderFamily,
+} from '../backend/shared/contracts/PipelineKey'
 import { TERRAIN_COMPACT_LAYOUT_ID } from '../layout/BuiltinLayouts'
 import { type RenderObject } from './RenderObject'
 

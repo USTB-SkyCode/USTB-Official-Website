@@ -12,8 +12,7 @@
       "@composables/*": ["./src/composables/*"],
       "@world/*": ["./src/world/*"],
       "@components/*": ["./src/components/*"],
-      "@render/*": ["./src/engine/render/*"],
-      "@shaders/*": ["./src/engine/render/shaders/*"]
+      "@render/*": ["./src/engine/render/*"]
     }
   }
 }

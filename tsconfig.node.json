@@ -13,7 +13,7 @@
     "../bak/**",
     "../latest/**",
     "../old/**",
-    "../WGPU/**",
+    "../WebGPU/**",
     "../duplicated/**",
   ],
   "compilerOptions": {

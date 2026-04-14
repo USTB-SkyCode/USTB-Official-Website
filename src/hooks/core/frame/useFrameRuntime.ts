@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from '@/engine/config'
-import type { ChunkArtifactRenderBridge } from '@/engine/render/terrain/runtime/ChunkArtifactRenderBridge'
+import type { ChunkArtifactRenderBridge } from '@/engine/render/backend/webgl2/terrain/runtime/ChunkArtifactRenderBridge'
 import { CSMCalculator } from '@/engine/render/core/lighting/CSMCalculator'
 import type { ChunkDirector } from '@/engine/world/chunk/system/ChunkDirector'
 import { useRuntimeTelemetry } from './useRuntimeTelemetry'

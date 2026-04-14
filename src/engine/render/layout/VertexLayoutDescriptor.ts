@@ -21,7 +21,7 @@ export interface VertexLayoutDescriptor {
     webgl2?: {
       preferVAO: boolean
     }
-    wgpu?: {
+    webgpu?: {
       stepMode?: 'vertex' | 'instance'
     }
   }

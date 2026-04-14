@@ -7,7 +7,7 @@ import {
   isAdminPermission,
 } from '@/constants/userPermission'
 import apiFetch from '@/utils/api'
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from '@/engine/world/entity/character/modelType'
 import {
   detectCharacterModelTypeFromSkinUrl,
   normalizeCharacterModelType,

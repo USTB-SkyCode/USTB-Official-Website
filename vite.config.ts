@@ -221,7 +221,6 @@ export default defineConfig(({ mode }) => {
         '@world': fileURLToPath(new URL('./src', import.meta.url)),
         '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
         '@render': fileURLToPath(new URL('./src/engine/render', import.meta.url)),
-        '@shaders': fileURLToPath(new URL('./src/engine/render/shaders', import.meta.url)),
       },
     },
     server: {

@@ -1,3 +1,8 @@
+import {
+  getRenderBackendCapabilitySnapshot,
+  getWebGL2RenderBackendCapability,
+} from '@/engine/render/backend/shared/runtime/RenderBackendCapabilities'
+
 function readNavigatorMobileFlag() {
   if (typeof navigator === 'undefined') {
     return false
@@ -32,22 +37,11 @@ export function isLikelyMobileDevice() {
 }
 
 export function supportsWebGL2() {
-  if (typeof document === 'undefined') {
-    return false
-  }
+  return getWebGL2RenderBackendCapability().browserSupported
+}
 
-  const canvas = document.createElement('canvas')
-  try {
-    return !!canvas.getContext('webgl2', {
-      antialias: false,
-      alpha: false,
-      depth: true,
-      stencil: false,
-      preserveDrawingBuffer: false,
-    })
-  } catch {
-    return false
-  }
+export function supportsWebGPUDeviceBootstrap() {
+  return getRenderBackendCapabilitySnapshot().webgpu.browserSupported
 }
 
 export type EngineTakeoverSupport = {
@@ -56,10 +50,17 @@ export type EngineTakeoverSupport = {
 }
 
 export function getEngineTakeoverSupport(): EngineTakeoverSupport {
-  if (!supportsWebGL2()) {
+  const capabilities = getRenderBackendCapabilitySnapshot()
+  const hasRuntimeReadyBackend =
+    capabilities.webgl2.runtimeReady || capabilities.webgpu.runtimeReady
+
+  if (!hasRuntimeReadyBackend) {
     return {
       supported: false,
-      reason: 'WebGL2 unavailable',
+      reason:
+        capabilities.webgl2.reason ??
+        capabilities.webgpu.reason ??
+        'No runtime-ready render backend',
     }
   }
 

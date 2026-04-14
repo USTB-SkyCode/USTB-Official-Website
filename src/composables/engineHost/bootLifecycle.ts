@@ -4,12 +4,14 @@ import { resolveSceneConfig, resolveSceneCameraPreset } from '@/config/scene'
 import { classifyRuntimeConfigPatch } from '@/engine/runtime/EngineRuntimeConfigApplier'
 import { registerEngineRuntimeConfigHost } from '@/engine/runtime/EngineRuntimeConfigHostBridge'
 import type { ResourceDefinition } from '@/engine/config'
+import type { RenderBackendKind } from '@/engine/render/backend/shared/runtime/RenderBackendCapabilities'
 import type { EngineCameraPose, EnginePlayerSkinOverride } from '@/hooks/useEngine'
 import type { PlayerRigMotionBehavior } from '@/engine/world/game/PlayerRig'
 
 export type HostBootReason =
   | 'boot-scene'
   | 'switch-resource'
+  | 'switch-render-backend'
   | 'refresh-runtime-config'
   | 'refresh-player-skin'
 
@@ -32,6 +34,10 @@ export type HostBootLifecycleResource = {
   activeResourceKey: ComputedRef<string>
 }
 
+export type HostBootLifecycleBackend = {
+  preferredBackendKind: ComputedRef<RenderBackendKind>
+}
+
 export type HostBootLifecycleEngine = {
   setup: (
     canvas: HTMLCanvasElement,
@@ -40,12 +46,17 @@ export type HostBootLifecycleEngine = {
       worldBasePath?: string
       initialPose?: EngineCameraPose
       playerSkin?: EnginePlayerSkinOverride
+      renderBackend?: RenderBackendKind
     },
   ) => Promise<unknown>
   dispose: () => void
   refreshEngineSession: (
     resourceOverride?: ResourceDefinition,
-    setupOptionsOverride?: { playerSkin?: EnginePlayerSkinOverride },
+    setupOptionsOverride?: {
+      playerSkin?: EnginePlayerSkinOverride
+      renderBackend?: RenderBackendKind
+    },
+    canvasOverride?: HTMLCanvasElement,
   ) => Promise<unknown>
   applyCameraPreset: (presetKey: string) => void
   configurePlayerMotionBehavior: (behavior: PlayerRigMotionBehavior | null | undefined) => void
@@ -66,12 +77,13 @@ export type HostBootLifecycleOptions = {
   state: HostBootLifecycleState
   scene: HostBootLifecycleScene
   resource: HostBootLifecycleResource
+  backend: HostBootLifecycleBackend
   engine: HostBootLifecycleEngine
   host: HostBootLifecycleHost
 }
 
 export function useHostBootLifecycle(options: HostBootLifecycleOptions) {
-  const { state, scene, resource, engine, host } = options
+  const { state, scene, resource, backend, engine, host } = options
   const { engineStatus, hostBootReason } = state
   let bootSerial = 0
 
@@ -128,10 +140,11 @@ export function useHostBootLifecycle(options: HostBootLifecycleOptions) {
       resource.activeResourceKey,
       scene.canvasRef,
       scene.sceneKey,
+      backend.preferredBackendKind,
     ],
     async (
-      [shouldReserveHost, resourceKey, canvas, nextSceneKey],
-      [_prevShouldReserveHost, prevResourceKey, _prevCanvas, previousSceneKey],
+      [shouldReserveHost, resourceKey, canvas, nextSceneKey, nextBackendKind],
+      [_prevShouldReserveHost, prevResourceKey, _prevCanvas, previousSceneKey, prevBackendKind],
     ) => {
       const currentBoot = ++bootSerial
 
@@ -156,7 +169,8 @@ export function useHostBootLifecycle(options: HostBootLifecycleOptions) {
       if (
         engineStatus.value === 'ready' &&
         prevResourceKey === resourceKey &&
-        previousSceneKey === nextSceneKey
+        previousSceneKey === nextSceneKey &&
+        prevBackendKind === nextBackendKind
       ) {
         host.setHostRuntimeReady(true)
         return
@@ -173,13 +187,24 @@ export function useHostBootLifecycle(options: HostBootLifecycleOptions) {
         engineStatus.value === 'ready' &&
         prevResourceKey !== undefined &&
         prevResourceKey !== resourceKey
-      if (resourceChanged) {
-        markHostBootReason('switch-resource')
+      const backendChanged =
+        engineStatus.value === 'ready' &&
+        prevBackendKind !== undefined &&
+        prevBackendKind !== nextBackendKind
+      if (resourceChanged || backendChanged) {
+        markHostBootReason(backendChanged ? 'switch-render-backend' : 'switch-resource')
         engineStatus.value = 'booting'
         host.setHostRuntimeReady(false)
 
         try {
-          await engine.refreshEngineSession(resource.activeResource.value)
+          await engine.refreshEngineSession(
+            resource.activeResource.value,
+            {
+              playerSkin: scene.currentPlayerSkinOverride.value ?? undefined,
+              renderBackend: nextBackendKind,
+            },
+            backendChanged ? canvas : undefined,
+          )
 
           if (currentBoot !== bootSerial) {
             engine.dispose()
@@ -214,6 +239,7 @@ export function useHostBootLifecycle(options: HostBootLifecycleOptions) {
           worldBasePath: sceneConfig.mcaBaseUrl,
           initialPose: initialPose ?? undefined,
           playerSkin: scene.currentPlayerSkinOverride.value ?? undefined,
+          renderBackend: nextBackendKind,
         })
 
         if (currentBoot !== bootSerial) {

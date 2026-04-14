@@ -1,3 +1,5 @@
+import type { CharacterModelType } from '@/engine/world/entity/character/modelType'
+
 /**
  * @file CharacterModelSpec.ts
  * @brief Minecraft 风格角色模型数据规格。
@@ -11,7 +13,7 @@
 // ── 公开类型 ─────────────────────────────────────────────────
 
 /** 角色体型：normal = Steve（4px 手臂）, slim = Alex（3px 手臂） */
-export type CharacterModelType = 'normal' | 'slim'
+export type { CharacterModelType } from '@/engine/world/entity/character/modelType'
 
 /** UV 矩形，纹理像素坐标 [u1, v1, u2, v2] */
 type UVRect = readonly [number, number, number, number]

@@ -389,20 +389,20 @@ import {
 import {
   createReferenceDemoHologramEffectSettings,
   type HologramEffectSettings,
-} from '@/engine/render/ui3d/HologramEffectSettings'
+} from '@/engine/render/backend/webgl2/ui3d/HologramEffectSettings'
 import {
   LIQUID_GLASS_CONTROL_SECTIONS as LIQUID_GLASS_EFFECT_CONTROL_SECTIONS,
   createReferenceDemoLiquidGlassEffectSettings,
   type LiquidGlassControlDefinition,
   type LiquidGlassEffectSettings,
-} from '@/engine/render/ui3d/LiquidGlassEffectSettings'
-import { createHologramComponent } from '@/engine/render/ui3d/HologramComponent'
-import { createLiquidGlassComponent } from '@/engine/render/ui3d/LiquidGlassComponent'
-import { createTextLabelComponent } from '@/engine/render/ui3d/TextLabelComponent'
+} from '@/engine/render/backend/webgl2/ui3d/LiquidGlassEffectSettings'
+import { createHologramComponent } from '@/engine/render/backend/webgl2/ui3d/HologramComponent'
+import { createLiquidGlassComponent } from '@/engine/render/backend/webgl2/ui3d/LiquidGlassComponent'
+import { createTextLabelComponent } from '@/engine/render/backend/webgl2/ui3d/TextLabelComponent'
 import {
   createReferenceDemoTextLabelStyle,
   type TextLabelStyle,
-} from '@/engine/render/ui3d/TextLabelSettings'
+} from '@/engine/render/backend/webgl2/ui3d/TextLabelSettings'
 import { useEngine } from '@/hooks/useEngine'
 import { useResourceStore } from '@/stores/resource'
 

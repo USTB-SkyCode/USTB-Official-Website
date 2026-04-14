@@ -178,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-import type { LiquidGlassControlDefinition } from '@/engine/render/ui3d/LiquidGlassEffectSettings'
+import type { LiquidGlassControlDefinition } from '@/engine/render/backend/webgl2/ui3d/LiquidGlassEffectSettings'
 import { useTakeoverLiquidGlassEditor } from '@/hooks/core/takeover/useTakeoverLiquidGlassEditor'
 
 const {

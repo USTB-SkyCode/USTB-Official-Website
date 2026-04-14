@@ -1,4 +1,4 @@
-import type { CharacterModelType } from '@/engine/render/entity/character/CharacterModelSpec'
+import type { CharacterModelType } from '@/engine/world/entity/character/modelType'
 
 const NORMAL_MODEL_ALIASES = new Set(['default', 'normal', 'classic', 'steve'])
 const SLIM_MODEL_ALIASES = new Set(['slim', 'alex'])

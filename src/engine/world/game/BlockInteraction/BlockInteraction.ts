@@ -1,6 +1,6 @@
 import { ref, readonly, onUnmounted } from 'vue'
 import type { ChunkManager } from '@/engine/world/chunk'
-import type { SelectionOutline } from '@/engine/render/passes/SelectionOutlinePass'
+import type { EngineSelectionOutline } from '@/engine/render/EngineRenderer'
 import type {
   BlockInteractionController,
   BlockStateBridge,
@@ -69,7 +69,7 @@ export function useBlockInteraction(chunkManager: ChunkManager) {
   function update(
     cameraPosition: ArrayLike<number>,
     cameraTarget: ArrayLike<number>,
-  ): SelectionOutline | null {
+  ): EngineSelectionOutline | null {
     if (!controller) {
       targetedBlockState.value = null
       targetedBlockPosition.value = null

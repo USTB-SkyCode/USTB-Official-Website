@@ -1,6 +1,6 @@
 import { ref, readonly } from 'vue'
 import type { CSMCalculator } from '@/engine/render/core/lighting/CSMCalculator'
-import type { Renderer } from '@/engine/render/Renderer'
+import type { EngineRenderer } from '@/engine/render/EngineRenderer'
 import type { ChunkManager } from '@/engine/world/chunk'
 import { GAME_CONFIG } from '@/engine/config'
 import type { RuntimeDebugSnapshot } from '@/engine/debug/runtimeDebugFormatter'
@@ -28,7 +28,7 @@ type UpdateFrameSnapshotParams = {
   renderCameraEyePosition: ArrayLike<number>
   renderCameraViewPosition: ArrayLike<number>
   dayNightTimeHours: number
-  renderer: Renderer
+  renderer: EngineRenderer
   pendingChunkUploads: number
   artifactVisibleBreakdown: string
   csmMs: number

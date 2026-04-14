@@ -28,7 +28,7 @@ export default [
       '../bak/**',
       '../latest/**',
       '../old/**',
-      '../WGPU/**',
+      '../WebGPU/**',
     ],
   },
   // eslint 默认推荐规则

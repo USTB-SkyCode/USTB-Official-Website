@@ -2,7 +2,7 @@ import { ref, readonly } from 'vue'
 import {
   createLiquidGlassEffectInstance,
   type LiquidGlassEffectInstance,
-} from '@/engine/render/ui3d/LiquidGlassPanel'
+} from '@/engine/render/backend/webgl2/ui3d/LiquidGlassPanel'
 import { resolveTakeoverSurfaceLayer, type TakeoverSurfaceLayer } from '@/constants/takeoverSurface'
 import type { TakeoverSurfaceConsumerInstance } from '@/engine/takeover/TakeoverSurfaceConsumer'
 

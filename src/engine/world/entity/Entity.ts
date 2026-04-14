@@ -1,4 +1,4 @@
-export type { EntityRenderState } from '@/engine/render/entity/types'
+export type { EntityRenderState } from './renderState'
 
 export type Vec3Like = ArrayLike<number>
 

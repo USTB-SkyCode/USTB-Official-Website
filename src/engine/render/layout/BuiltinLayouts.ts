@@ -10,7 +10,7 @@ export const TERRAIN_COMPACT_LAYOUT: VertexLayoutDescriptor = {
   compatibleDomains: ['terrain', 'decal'],
   backendHints: {
     webgl2: { preferVAO: true },
-    wgpu: { stepMode: 'vertex' },
+    webgpu: { stepMode: 'vertex' },
   },
   attributes: [
     { location: 0, semantic: 'position', format: 'u32x4', offset: 0, bufferSlot: 0, integer: true },
@@ -24,7 +24,7 @@ export const MODEL_STANDARD_LAYOUT: VertexLayoutDescriptor = {
   compatibleDomains: ['entity', 'debug', 'particle'],
   backendHints: {
     webgl2: { preferVAO: true },
-    wgpu: { stepMode: 'vertex' },
+    webgpu: { stepMode: 'vertex' },
   },
   attributes: [
     { location: 0, semantic: 'position', format: 'vec3<f32>', offset: 0, bufferSlot: 0 },
@@ -47,7 +47,7 @@ export const MODEL_STANDARD_INSTANCED_LAYOUT: VertexLayoutDescriptor = {
   compatibleDomains: ['entity', 'debug', 'particle'],
   backendHints: {
     webgl2: { preferVAO: true },
-    wgpu: { stepMode: 'instance' },
+    webgpu: { stepMode: 'instance' },
   },
   attributes: [
     { location: 0, semantic: 'position', format: 'vec3<f32>', offset: 0, bufferSlot: 0 },

@@ -19,9 +19,14 @@
     :data-frame-mode="pageFrameMode"
     :data-camera-preset-key="cameraPresetKey ?? ''"
     :data-resource-key="resourceActiveKey"
+    :data-render-backend="renderBackendPreference"
     aria-hidden="true"
   >
-    <canvas ref="canvasRef" class="persistent-engine-host__canvas"></canvas>
+    <canvas
+      :key="renderBackendPreference"
+      ref="canvasRef"
+      class="persistent-engine-host__canvas"
+    ></canvas>
   </div>
 
   <div
@@ -88,6 +93,7 @@ const {
   hostReady,
   engineStatus,
   resourceActiveKey,
+  renderBackendPreference,
   setHomeExploreEngineSettingsOpen,
   exploreInteractionActive,
   loginInteractionActive,

@@ -1,4 +1,4 @@
-import type { DrawCallPassName } from '@/engine/render/debug/DrawCallStats'
+import type { EngineDrawCallPassName } from '@/engine/render/EngineRenderer'
 
 // 单帧性能快照。
 export type PerformanceSnapshot = {
@@ -50,7 +50,7 @@ export type RuntimeDebugSnapshot = {
       total: number
       drawArrays: number
       drawElements: number
-      byPass: Record<DrawCallPassName, number>
+      byPass: Record<EngineDrawCallPassName, number>
     }
     totalLightCount: number
     selectedLightCount: number
